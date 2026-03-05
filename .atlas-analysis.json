@@ -1,0 +1,103 @@
+{
+  "projectType": "saas",
+  "projectName": "MyFinance UI",
+  "projectDescription": "A modern Angular-based personal finance management application for tracking income, expenses, and generating financial reports.",
+  "theme": "almond",
+  "primaryColor": "#3cbcab",
+  "lightColor": "#349b8b",
+  "darkColor": "#949494",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/transactions",
+              "features/categories",
+              "features/reports",
+              "features/authentication"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/docker",
+              "deployment/environment-config"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Reference",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "reference/overview",
+              "reference/project-structure",
+              "reference/routing"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "reference/components/transaction-form",
+              "reference/components/category-form",
+              "reference/components/reports",
+              "reference/components/charts"
+            ]
+          },
+          {
+            "group": "Services & Models",
+            "pages": [
+              "reference/services/auth-service",
+              "reference/services/transaction-service",
+              "reference/services/category-service",
+              "reference/models"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "JWT-based user authentication",
+    "Income and expense transaction tracking",
+    "Category-based organization",
+    "Monthly financial reports with charts",
+    "Date picker for transaction dates",
+    "Real-time form validation",
+    "Toast notifications",
+    "Confirmation dialogs",
+    "Docker deployment support"
+  ],
+  "publicApiSurface": [
+    "AuthService.login()",
+    "AuthService.logout()",
+    "AuthService.isLoggedIn()",
+    "TransactionService.createTransaction()",
+    "TransactionService.getAllTransactions()",
+    "TransactionService.getTransactionById()",
+    "TransactionService.updateTransaction()",
+    "TransactionService.deleteTransaction()",
+    "TransactionService.getMonthlyReport()",
+    "CategoryService.createCategory()",
+    "CategoryService.getAllCategories()",
+    "CategoryService.getCategoryById()",
+    "CategoryService.getCategoriesByType()",
+    "CategoryService.updateCategory()",
+    "CategoryService.deleteCategory()",
+    "ToastService.success()",
+    "authGuard"
+  ]
+}
