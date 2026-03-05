@@ -1,0 +1,213 @@
+---
+title: Transactions
+description: Learn how to create, view, update, and delete transactions in MyFinance UI
+---
+
+Transactions are the core of your financial tracking. MyFinance UI allows you to record both income and expenses with detailed information including dates, amounts, categories, and descriptions.
+
+## Creating a Transaction
+
+The transaction form is accessible via the `/transactions` route and provides a comprehensive interface for adding new financial records.
+
+<Steps>
+  <Step title="Select a Date">
+    Use the date picker powered by Flatpickr to select when the transaction occurred. The date picker displays in a user-friendly format and is required for all transactions.
+
+    ```html
+    <input
+      type="date"
+      appFlatpickr
+      formControlName="date"
+      placeholder="dd/mm/aaaa"
+      class="w-fit px-4 py-2.5 pl-10 bg-gray-50 border border-gray-200 rounded-xl"
+    />
+    ```
+
+    The Flatpickr directive configures the date picker with these settings:
+    - **altFormat**: `F j, Y` (e.g., "March 5, 2026")
+    - **dateFormat**: `Y-m-d` (stored as ISO format)
+    - **disableMobile**: true (uses consistent interface across devices)
+  </Step>
+
+  <Step title="Enter the Amount">
+    Input the transaction amount. The field requires a positive number greater than 0.
+
+    ```typescript
+    amount: new FormControl(null, {
+      validators: [Validators.required, Validators.min(1)]
+    })
+    ```
+
+    The amount field displays with a dollar sign prefix and shows validation errors if the value is invalid.
+  </Step>
+
+  <Step title="Choose Transaction Type">
+    Select whether this is an **Income** or **Expense** transaction. This determines which categories are available in the next step.
+
+    ```typescript
+    this.type.valueChanges.subscribe(type => {
+      if (!type) return;
+      
+      this.category.reset();
+      this.category.enable();
+
+      this.categoryService.getCategoriesByType(type).subscribe(response => {
+        this.categories.set(response.data);
+      })
+    });
+    ```
+
+    When you change the transaction type, the category dropdown automatically updates to show only relevant categories.
+  </Step>
+
+  <Step title="Add Description (Optional)">
+    Provide additional context about the transaction. This field is optional but helpful for future reference.
+
+    ```html
+    <textarea formControlName="description"
+              rows="3"
+              placeholder="e.g. Grocery shopping..."
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+    </textarea>
+    ```
+  </Step>
+
+  <Step title="Select a Category">
+    Choose a category that matches your transaction type. The category field is disabled until you select a transaction type.
+
+    ```html
+    <app-ui-dropdown
+      formControlName="category"
+      [items]="categories()"
+      trackByField="id"
+      labelField="name"
+      [valueField]="'id'"
+    />
+    ```
+
+    <Note>
+      Categories are filtered based on your selected transaction type. Income transactions only show Income categories, and Expense transactions only show Expense categories.
+    </Note>
+  </Step>
+
+  <Step title="Submit the Transaction">
+    Click the "Save Transaction" button to create the transaction. The form validates all required fields before submission.
+
+    ```typescript
+    onSubmit() {
+      if (this.transactionForm.invalid) return;
+
+      const transaction: createTransactionModel = {
+        date: this.date.value ?? undefined,
+        amount: this.amount.value!,
+        type: this.type.value as 'Income' | 'Expense',
+        description: this.description.value ?? undefined,
+        categoryId: this.category.value!,
+      }
+
+      this.transactionService.createTransaction(transaction).subscribe({
+        next: (response) => {
+          this.transactionForm.reset();
+          this.toastService.success('Transaction created successfully');
+        }
+      });
+    }
+    ```
+
+    Upon successful creation, the form resets and displays a success toast notification.
+  </Step>
+</Steps>
+
+## Transaction Data Model
+
+Transactions are represented with the following structure:
+
+```typescript
+export interface Transaction {
+  id: number;
+  date: Date;
+  amount: number;
+  type: 'Income' | 'Expense';
+  description?: string;
+  categoryId: number;
+  category?: Category;
+  categoryNameSnapshot?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+```
+
+<Note>
+  The `categoryNameSnapshot` field preserves the category name at the time of transaction creation, ensuring historical accuracy even if the category is later renamed or deleted.
+</Note>
+
+## Form Validation
+
+The transaction form implements comprehensive validation:
+
+| Field | Validation Rules | Error Message |
+|-------|------------------|---------------|
+| Date | Required | Field is required |
+| Amount | Required, minimum value of 1 | "Please enter a valid amount." |
+| Type | Required | User must select Income or Expense |
+| Description | Optional | No validation |
+| Category | Required, minimum value of 1 | "Please select a category." |
+
+## Viewing Transactions
+
+To view and manage your transactions, navigate to the Reports page where you can:
+
+- View all transactions in a sortable table
+- Filter transactions by date range
+- Edit or delete individual transactions
+- See transaction details including date, amount, type, category, and creation time
+
+Learn more about viewing transactions in the [Reports](/features/reports) documentation.
+
+## Technical Implementation
+
+### Form Controls
+
+The transaction form uses Angular Reactive Forms:
+
+```typescript
+transactionForm = new FormGroup({
+  date: new FormControl(null, [Validators.required]),
+  amount: new FormControl(null, {
+    validators: [Validators.required, Validators.min(1)]
+  }),
+  type: new FormControl('', [Validators.required]),
+  description: new FormControl(null),
+  category: new FormControl({value: null, disabled: true}, {
+    validators: [Validators.required, Validators.min(1)]
+  }),
+});
+```
+
+### Service Integration
+
+The form integrates with the `TransactionService` to persist data:
+
+```typescript
+createTransaction(transaction: createTransactionModel): Observable<ApiResponse<Transaction>> {
+  return this.http.post<ApiResponse<Transaction>>(this.apiUrl, transaction);
+}
+```
+
+<Card title="Source Code Reference" icon="code">
+  View the complete implementation:
+  - Transaction Form: `src/app/components/transaction-form/transaction-form.ts`
+  - Transaction Service: `src/app/services/transaction-service.ts`
+  - Transaction Model: `src/app/models/transaction-model.ts`
+</Card>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Categories" icon="folder" href="/features/categories">
+    Learn how to create and manage transaction categories
+  </Card>
+  <Card title="Reports" icon="chart-line" href="/features/reports">
+    View and analyze your transaction history
+  </Card>
+</CardGroup>

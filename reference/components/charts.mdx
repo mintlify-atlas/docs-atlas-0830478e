@@ -1,0 +1,396 @@
+---
+title: ReportChart Component
+description: Component for visualizing income and expense data using Highcharts area charts
+---
+
+## Overview
+
+The `ReportChart` component provides interactive area charts for visualizing monthly income and expense data. It uses Highcharts library to render responsive, animated charts showing financial trends over a 12-month period.
+
+**Location**: `~/workspace/source/src/app/components/report-chart/report-chart.ts:15`
+
+## Component Metadata
+
+```typescript
+@Component({
+  selector: 'app-report-chart',
+  standalone: true,
+  imports: [HighchartsChartComponent],
+  templateUrl: './report-chart.html',
+  styleUrl: './report-chart.css',
+})
+```
+
+**Note**: This is a standalone component that can be used independently.
+
+## Dependencies
+
+The component uses constructor injection:
+
+```typescript
+constructor(private transactionService: TransactionService) {}
+```
+
+**External Libraries**:
+- `highcharts`: Core charting library
+- `highcharts-angular`: Angular wrapper for Highcharts
+
+## Properties
+
+```typescript
+Highcharts: typeof Highcharts = Highcharts;
+currentYear = new Date().getFullYear();
+updateFlag = false;
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Highcharts` | `typeof Highcharts` | Reference to Highcharts library (required by highcharts-angular) |
+| `currentYear` | `number` | Current year for report display |
+| `updateFlag` | `boolean` | Triggers chart updates when set to true |
+
+## Chart Configuration
+
+The component defines comprehensive chart options:
+
+```typescript
+chartOptions: Highcharts.Options = {
+  chart: {
+    type: 'area'
+  },
+
+  title: {
+    text: `Income and Expense ${this.currentYear}`
+  },
+
+  subtitle: {
+    text: 'Period: January - December'
+  },
+
+  xAxis: {
+    categories: [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ],
+    title: {
+      text: 'Month'
+    }
+  },
+
+  yAxis: {
+    title: {
+      text: 'Amount ($)'
+    }
+  },
+
+  tooltip: {
+    shared: true,
+    valuePrefix: '$'
+  },
+
+  plotOptions: {
+    area: {
+      marker: {
+        enabled: false,
+      }
+    }
+  },
+
+  series: [
+    {
+      type: 'area',
+      name: 'Income',
+      color: '#5ccb5f',
+      data: []
+    },
+    {
+      type: 'area',
+      name: 'Expense',
+      color: '#f00',
+      data: []
+    }
+  ]
+};
+```
+
+### Chart Configuration Breakdown
+
+#### Chart Type
+```typescript
+chart: {
+  type: 'area'
+}
+```
+- Uses area chart for trend visualization
+
+#### Title & Subtitle
+```typescript
+title: {
+  text: `Income and Expense ${this.currentYear}`
+},
+subtitle: {
+  text: 'Period: January - December'
+}
+```
+- Dynamic title with current year
+- Static subtitle showing period
+
+#### X-Axis (Months)
+```typescript
+xAxis: {
+  categories: [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ],
+  title: {
+    text: 'Month'
+  }
+}
+```
+- 12 month categories
+- Labeled as "Month"
+
+#### Y-Axis (Amount)
+```typescript
+yAxis: {
+  title: {
+    text: 'Amount ($)'
+  }
+}
+```
+- Displays monetary amounts
+- Dollar sign indicator
+
+#### Tooltip
+```typescript
+tooltip: {
+  shared: true,
+  valuePrefix: '$'
+}
+```
+- Shared tooltips show both income and expense
+- Values prefixed with dollar sign
+
+#### Plot Options
+```typescript
+plotOptions: {
+  area: {
+    marker: {
+      enabled: false,
+    }
+  }
+}
+```
+- Disables markers for cleaner appearance
+
+#### Series (Income & Expense)
+```typescript
+series: [
+  {
+    type: 'area',
+    name: 'Income',
+    color: '#5ccb5f',  // Green
+    data: []
+  },
+  {
+    type: 'area',
+    name: 'Expense',
+    color: '#f00',     // Red
+    data: []
+  }
+]
+```
+- **Income**: Green (#5ccb5f)
+- **Expense**: Red (#f00)
+- Data populated dynamically
+
+## Lifecycle Hooks
+
+### ngOnInit
+
+Initializes chart by loading report data:
+
+```typescript
+ngOnInit(): void {
+  this.loadReportData();
+}
+```
+
+## Data Loading Methods
+
+### loadReportData
+
+Fetches and processes report data for both income and expense:
+
+```typescript
+private loadReportData(): void {
+  forkJoin({
+    income: this.transactionService.getMonthlyReport('Income', this.currentYear - 1),
+    expense: this.transactionService.getMonthlyReport('Expense', this.currentYear - 1)
+  }).subscribe({
+    next: ({ income, expense }) => {
+      const incomeData = this.mapReportToChartData(income.data);
+      const expenseData = this.mapReportToChartData(expense.data);
+
+      this.chartOptions.series = [
+        {
+          type: 'area',
+          name: 'Income',
+          color: '#5ccb5f',
+          data: incomeData
+        },
+        {
+          type: 'area',
+          name: 'Expense',
+          color: '#f00',
+          data: expenseData
+        }
+      ];
+
+      this.updateFlag = true;
+    },
+    error: (error) => {
+      console.error('Error loading report data:', error);
+    }
+  });
+}
+```
+
+**Behavior**:
+1. Uses `forkJoin` to fetch income and expense reports in parallel
+2. Fetches data for previous year (`currentYear - 1`)
+3. Maps report data to chart-compatible format
+4. Updates chart series with processed data
+5. Sets `updateFlag` to trigger chart re-render
+6. Logs errors to console
+
+**Note**: Currently fetches data for `currentYear - 1` instead of `currentYear`.
+
+### mapReportToChartData
+
+Transforms report data into chart-ready format:
+
+```typescript
+private mapReportToChartData(reports: Report[]): number[] {
+  const monthlyData = new Array(12).fill(0);
+  
+  reports.forEach(report => {
+    if (report.month >= 1 && report.month <= 12) {
+      monthlyData[report.month - 1] = report.total;
+    }
+  });
+
+  return monthlyData;
+}
+```
+
+**Parameters**:
+- `reports`: Array of `Report` objects from the API
+
+**Returns**:
+- `number[]`: Array of 12 numbers representing monthly totals
+
+**Behavior**:
+1. Creates array of 12 zeros (one per month)
+2. Iterates through report data
+3. Validates month is between 1-12
+4. Maps report total to correct array index (month - 1)
+5. Returns complete 12-month array
+
+**Index Mapping**:
+- Month 1 (January) → Index 0
+- Month 2 (February) → Index 1
+- ...
+- Month 12 (December) → Index 11
+
+## Data Visualization
+
+### Chart Type: Area Chart
+
+Area charts are chosen for:
+- **Trend Visualization**: Shows changes over time
+- **Comparison**: Easy to compare income vs expense
+- **Volume Indication**: Filled area emphasizes magnitude
+
+### Color Scheme
+
+- **Income**: `#5ccb5f` (Green) - Represents positive cash flow
+- **Expense**: `#f00` (Red) - Represents spending
+
+### Data Flow
+
+```
+ngOnInit()
+  ↓
+loadReportData()
+  ↓
+forkJoin([Income Report, Expense Report])
+  ↓
+mapReportToChartData() × 2
+  ↓
+Update chartOptions.series
+  ↓
+updateFlag = true
+  ↓
+Highcharts re-renders
+```
+
+## Highcharts Integration
+
+### Template Usage
+
+The component uses the `highcharts-angular` wrapper:
+
+```typescript
+imports: [HighchartsChartComponent]
+```
+
+**Template** (typical usage):
+```html
+<highcharts-chart 
+  [Highcharts]="Highcharts"
+  [options]="chartOptions"
+  [updateFlag]="updateFlag"
+></highcharts-chart>
+```
+
+### Update Mechanism
+
+The `updateFlag` triggers chart updates:
+
+```typescript
+this.updateFlag = true;
+```
+
+When set to `true`, the chart component re-renders with new data.
+
+## Usage Example
+
+```typescript
+import { ReportChart } from './components/report-chart/report-chart';
+
+// In your template
+<app-report-chart></app-report-chart>
+```
+
+## Performance Considerations
+
+1. **Parallel Loading**: Uses `forkJoin` to fetch income and expense data simultaneously
+2. **Change Detection**: Standalone component with default change detection
+3. **Disabled Markers**: Improves rendering performance for data-heavy charts
+
+## Error Handling
+
+```typescript
+error: (error) => {
+  console.error('Error loading report data:', error);
+}
+```
+
+Errors are logged to console but not displayed to users. Consider adding user-facing error handling.
+
+## Related Components
+
+- [TransactionReports](/reference/components/reports) - Tabular transaction data
+- [TransactionService](/reference/services/transaction-service) - Data source for charts
+- [Report Model](/reference/models/report) - Data structure for monthly reports

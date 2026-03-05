@@ -1,0 +1,447 @@
+---
+title: Installation
+description: Complete installation guide for MyFinance UI with detailed prerequisites and configuration steps
+---
+
+## Prerequisites
+
+Before installing MyFinance UI, ensure you have the following software installed on your system:
+
+### Required Software
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version 20 or higher**
+    
+    Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+  
+  <Card title="pnpm" icon="box">
+    **Version 10.28.0 or higher**
+    
+    Package manager used by this project
+  </Card>
+</CardGroup>
+
+### Installing pnpm
+
+If you don't have pnpm installed, you can install it globally using npm:
+
+<CodeGroup>
+
+```bash npm
+npm install -g pnpm
+```
+
+```bash standalone
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+```
+
+```bash homebrew (macOS)
+brew install pnpm
+```
+
+</CodeGroup>
+
+Verify the installation:
+
+```bash
+pnpm --version
+# Should output 10.28.0 or higher
+```
+
+### Optional: Angular CLI
+
+While not required (pnpm scripts handle most tasks), you may want to install the Angular CLI globally for additional development tools:
+
+```bash
+pnpm install -g @angular/cli@21
+```
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the MyFinance UI repository to your local development environment:
+    
+    ```bash
+    git clone <repository-url>
+    cd my-finance.ui
+    ```
+  </Step>
+
+  <Step title="Install project dependencies">
+    Install all required npm packages using pnpm:
+    
+    <CodeGroup>
+    
+    ```bash pnpm (recommended)
+    pnpm install
+    ```
+    
+    ```bash npm
+    npm install
+    ```
+    
+    ```bash yarn
+    yarn install
+    ```
+    
+    </CodeGroup>
+    
+    <Note>
+      The project is configured with `"packageManager": "pnpm@10.28.0"` in `package.json`, so pnpm is the recommended package manager.
+    </Note>
+    
+    This will install all dependencies including:
+    - **Angular 21**: Core framework and router
+    - **TailwindCSS 4**: Utility-first CSS framework
+    - **Highcharts**: Charting library for reports
+    - **Flatpickr**: Date picker component
+    - **RxJS**: Reactive programming library
+  </Step>
+
+  <Step title="Configure environment variables">
+    Set up your environment configuration by editing `src/environments/environment.ts`:
+    
+    ```typescript src/environments/environment.ts
+    export const env = {
+        myFinanceApiUrl: 'http://localhost:5242/api'
+    }
+    ```
+    
+    **Configuration options:**
+    
+    | Variable | Description | Default |
+    |----------|-------------|----------|
+    | `myFinanceApiUrl` | Backend API base URL | `http://localhost:5242/api` |
+    
+    <Warning>
+      Make sure this URL matches your backend API server location. The application cannot function without a properly configured backend connection.
+    </Warning>
+  </Step>
+
+  <Step title="Verify installation">
+    Verify that everything is set up correctly by checking the Angular CLI version:
+    
+    ```bash
+    ng version
+    ```
+    
+    You should see output showing Angular CLI 21.0.0 and related packages.
+  </Step>
+</Steps>
+
+## Development Server
+
+### Starting the Server
+
+Launch the development server to start working with the application:
+
+<CodeGroup>
+
+```bash pnpm
+pnpm start
+```
+
+```bash npm
+npm start
+```
+
+```bash Angular CLI
+ng serve
+```
+
+</CodeGroup>
+
+The development server will:
+- Compile the Angular application
+- Start a local server at `http://localhost:4200/`
+- Watch for file changes and automatically reload
+- Provide source maps for debugging
+
+### Development Server Options
+
+```bash
+# Specify a different port
+ng serve --port 4300
+
+# Open browser automatically
+ng serve --open
+
+# Enable production mode
+ng serve --configuration production
+
+# Disable live reload
+ng serve --live-reload false
+```
+
+### Accessing the Application
+
+Once the server is running:
+
+1. Open your browser to `http://localhost:4200/`
+2. You'll be redirected to `/login`
+3. Enter your credentials (managed by the backend API)
+4. After successful login, you'll access the transaction management interface
+
+<Info>
+  The application uses the `authGuard` to protect routes. All routes except `/login` require authentication.
+</Info>
+
+## Building for Production
+
+### Production Build
+
+Create an optimized production build:
+
+<CodeGroup>
+
+```bash pnpm
+pnpm run build
+```
+
+```bash npm
+npm run build
+```
+
+```bash Angular CLI
+ng build
+```
+
+</CodeGroup>
+
+The build process will:
+- Compile TypeScript to optimized JavaScript
+- Apply ahead-of-time (AOT) compilation
+- Tree-shake unused code
+- Minify and bundle assets
+- Generate hashed filenames for cache busting
+- Output to `dist/my-finance-ui/browser/`
+
+### Build Configurations
+
+The project includes two build configurations defined in `angular.json`:
+
+**Production** (default):
+```bash
+ng build --configuration production
+```
+- Full optimization enabled
+- Output hashing for all files
+- Budget limits: 500kB warning, 1MB error
+- No source maps
+
+**Development**:
+```bash
+ng build --configuration development
+```
+- No optimization
+- Source maps enabled
+- Faster build times
+- Easier debugging
+
+### Build Output
+
+After building, you'll find the compiled application in:
+
+```
+dist/my-finance-ui/browser/
+├── index.html
+├── main.*.js
+├── polyfills.*.js
+├── styles.*.css
+└── assets/
+```
+
+These files can be served by any static web server (nginx, Apache, etc.).
+
+## Project Structure
+
+After installation, your project structure will look like this:
+
+```
+my-finance.ui/
+├── src/
+│   ├── app/
+│   │   ├── components/        # UI components
+│   │   │   ├── transaction-form/
+│   │   │   ├── category-form/
+│   │   │   ├── transaction-reports/
+│   │   │   ├── report-chart/
+│   │   │   ├── login-form/
+│   │   │   ├── navbar/
+│   │   │   └── layout/
+│   │   ├── services/          # Business logic
+│   │   │   ├── Auth-service.ts
+│   │   │   ├── transaction-service.ts
+│   │   │   ├── category-service.ts
+│   │   │   └── toast-service.ts
+│   │   ├── models/            # TypeScript interfaces
+│   │   │   ├── transaction-model.ts
+│   │   │   ├── category-model.ts
+│   │   │   └── Auth.model.ts
+│   │   ├── guards/            # Route protection
+│   │   │   └── auth-guard.ts
+│   │   ├── interceptors/      # HTTP interceptors
+│   │   │   └── auth-interceptor.ts
+│   │   ├── directives/        # Custom directives
+│   │   │   └── flatpickr-directive.ts
+│   │   ├── app.routes.ts      # Route configuration
+│   │   └── app.config.ts      # App configuration
+│   ├── environments/
+│   │   └── environment.ts     # Environment config
+│   ├── styles.css             # Global styles
+│   └── main.ts                # Application entry point
+├── angular.json               # Angular workspace config
+├── tsconfig.json              # TypeScript configuration
+├── tailwind.config.js         # TailwindCSS config
+├── package.json               # Dependencies
+└── dockerfile                 # Docker configuration
+```
+
+## Docker Installation
+
+For production deployment, you can use Docker to containerize the application.
+
+### Building the Docker Image
+
+The project includes a multi-stage Dockerfile for optimized production builds:
+
+```bash
+docker build -t myfinance-ui .
+```
+
+The Dockerfile performs these steps:
+
+1. **Build stage**: Uses Node.js 20 Alpine to build the application
+   - Installs pnpm 10.28.0
+   - Installs dependencies
+   - Builds the production bundle
+
+2. **Runtime stage**: Uses nginx Alpine for serving
+   - Copies built files from build stage
+   - Exposes port 80
+   - Serves static files with nginx
+
+### Running the Docker Container
+
+```bash
+docker run -d -p 8080:80 myfinance-ui
+```
+
+The application will be available at `http://localhost:8080`
+
+<Note>
+  When running in Docker, make sure to update the API URL in `environment.ts` to point to your production backend API endpoint before building the image.
+</Note>
+
+For more details on Docker deployment, see the [Docker Deployment Guide](/deployment/docker).
+
+## Testing
+
+### Running Unit Tests
+
+The project uses Vitest for unit testing:
+
+<CodeGroup>
+
+```bash pnpm
+pnpm test
+```
+
+```bash npm
+npm test
+```
+
+```bash Angular CLI
+ng test
+```
+
+</CodeGroup>
+
+### Watch Mode
+
+Run tests in watch mode for active development:
+
+```bash
+ng build --watch --configuration development
+```
+
+## Troubleshooting
+
+### pnpm installation fails
+
+**Issue**: pnpm install fails with permission errors
+
+**Solution**: Run with appropriate permissions or use a Node version manager like nvm:
+
+```bash
+nvm install 20
+nvm use 20
+pnpm install
+```
+
+### Angular CLI not found
+
+**Issue**: `ng` command not recognized
+
+**Solution**: Install Angular CLI globally or use pnpm scripts:
+
+```bash
+pnpm install -g @angular/cli@21
+```
+
+Or use pnpm to run Angular commands:
+
+```bash
+pnpm ng serve
+```
+
+### Port 4200 already in use
+
+**Issue**: Development server fails because port is occupied
+
+**Solution**: Use a different port:
+
+```bash
+ng serve --port 4300
+```
+
+### Build fails with memory error
+
+**Issue**: Build process runs out of memory
+
+**Solution**: Increase Node.js memory limit:
+
+```bash
+NODE_OPTIONS="--max-old-space-size=4096" ng build
+```
+
+### CORS errors when accessing API
+
+**Issue**: Browser blocks API requests due to CORS policy
+
+**Solution**: Configure your backend API to allow requests from `http://localhost:4200` in development. For production, ensure proper CORS headers are set for your domain.
+
+## Next Steps
+
+After successful installation:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Get the app running quickly with step-by-step instructions
+  </Card>
+  
+  <Card title="Authentication" icon="shield" href="/features/authentication">
+    Learn how JWT authentication works in the application
+  </Card>
+  
+  <Card title="Project Structure" icon="folder-tree" href="/reference/project-structure">
+    Understand the codebase organization
+  </Card>
+  
+  <Card title="Environment Configuration" icon="gear" href="/deployment/environment-config">
+    Configure environment variables for different deployments
+  </Card>
+</CardGroup>

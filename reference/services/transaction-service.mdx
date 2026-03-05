@@ -1,0 +1,276 @@
+---
+title: 'TransactionService'
+description: 'Service for managing financial transactions'
+---
+
+## Overview
+
+The `TransactionService` provides methods for creating, reading, updating, and deleting transactions, as well as generating monthly reports. All methods return RxJS Observables.
+
+## Properties
+
+<ParamField path="apiUrl" type="string" default="${env.myFinanceApiUrl}/Transaction">
+  Base URL for transaction API endpoints
+</ParamField>
+
+## Methods
+
+### createTransaction()
+
+Creates a new transaction.
+
+```typescript
+createTransaction(transaction: createTransactionModel): Observable<ApiResponse<Transaction>>
+```
+
+<ParamField path="transaction" type="createTransactionModel" required>
+  Transaction data to create
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Transaction>>">
+  Observable emitting the created transaction wrapped in ApiResponse
+</ResponseField>
+
+**Example:**
+
+```typescript
+const newTransaction: createTransactionModel = {
+  amount: 150.00,
+  type: 'Expense',
+  description: 'Grocery shopping',
+  categoryId: 5,
+  date: '2026-03-05'
+};
+
+transactionService.createTransaction(newTransaction).subscribe({
+  next: (response) => console.log('Created:', response.data),
+  error: (err) => console.error('Error:', err)
+});
+```
+
+---
+
+### getAllTransactions()
+
+Retrieves all transactions.
+
+```typescript
+getAllTransactions(): Observable<ApiResponse<Transaction[]>>
+```
+
+<ResponseField name="returns" type="Observable<ApiResponse<Transaction[]>>">
+  Observable emitting array of all transactions
+</ResponseField>
+
+**Example:**
+
+```typescript
+transactionService.getAllTransactions().subscribe({
+  next: (response) => {
+    const transactions = response.data;
+    console.log(`Found ${transactions.length} transactions`);
+  }
+});
+```
+
+---
+
+### getTransactionById()
+
+Retrieves a single transaction by ID.
+
+```typescript
+getTransactionById(id: string): Observable<ApiResponse<Transaction>>
+```
+
+<ParamField path="id" type="string" required>
+  Transaction ID
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Transaction>>">
+  Observable emitting the requested transaction
+</ResponseField>
+
+**Example:**
+
+```typescript
+transactionService.getTransactionById('123').subscribe({
+  next: (response) => console.log('Transaction:', response.data)
+});
+```
+
+---
+
+### updateTransaction()
+
+Updates an existing transaction.
+
+```typescript
+updateTransaction(id: string, transaction: Transaction): Observable<ApiResponse<Transaction>>
+```
+
+<ParamField path="id" type="string" required>
+  Transaction ID to update
+</ParamField>
+
+<ParamField path="transaction" type="Transaction" required>
+  Updated transaction data
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Transaction>>">
+  Observable emitting the updated transaction
+</ResponseField>
+
+**Example:**
+
+```typescript
+const updatedTransaction: Transaction = {
+  id: 123,
+  amount: 175.00,
+  type: 'Expense',
+  description: 'Grocery shopping (updated)',
+  categoryId: 5,
+  date: new Date('2026-03-05')
+};
+
+transactionService.updateTransaction('123', updatedTransaction).subscribe({
+  next: (response) => console.log('Updated:', response.data)
+});
+```
+
+---
+
+### deleteTransaction()
+
+Deletes a transaction by ID.
+
+```typescript
+deleteTransaction(id: string): Observable<void>
+```
+
+<ParamField path="id" type="string" required>
+  Transaction ID to delete
+</ParamField>
+
+<ResponseField name="returns" type="Observable<void>">
+  Observable that completes when deletion is successful
+</ResponseField>
+
+**Example:**
+
+```typescript
+transactionService.deleteTransaction('123').subscribe({
+  next: () => console.log('Transaction deleted'),
+  error: (err) => console.error('Delete failed:', err)
+});
+```
+
+---
+
+### getMonthlyReport()
+
+Generates a monthly report for income or expenses for a given year.
+
+```typescript
+getMonthlyReport(type: 'Income' | 'Expense', year: number): Observable<ApiResponse<Report[]>>
+```
+
+<ParamField path="type" type="'Income' | 'Expense'" required>
+  Type of transactions to report on
+</ParamField>
+
+<ParamField path="year" type="number" required>
+  Year for the report (e.g., 2026)
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Report[]>>">
+  Observable emitting array of monthly report data
+</ResponseField>
+
+**Example:**
+
+```typescript
+transactionService.getMonthlyReport('Expense', 2026).subscribe({
+  next: (response) => {
+    response.data.forEach(report => {
+      console.log(`${report.month}/${report.year}: $${report.total}`);
+    });
+  }
+});
+```
+
+## API Endpoints
+
+<ResponseField name="POST /Transaction" type="endpoint">
+  Creates a new transaction
+</ResponseField>
+
+<ResponseField name="GET /Transaction" type="endpoint">
+  Retrieves all transactions
+</ResponseField>
+
+<ResponseField name="GET /Transaction/:id" type="endpoint">
+  Retrieves a specific transaction
+</ResponseField>
+
+<ResponseField name="PUT /Transaction/:id" type="endpoint">
+  Updates a transaction
+</ResponseField>
+
+<ResponseField name="DELETE /Transaction/:id" type="endpoint">
+  Deletes a transaction
+</ResponseField>
+
+<ResponseField name="GET /Transaction/report" type="endpoint">
+  Generates monthly report
+  
+  **Query Parameters:**
+  - `type`: 'Income' | 'Expense'
+  - `year`: number
+</ResponseField>
+
+## Source Code
+
+Location: `src/app/services/transaction-service.ts`
+
+```typescript
+import { HttpClient } from "@angular/common/http";
+import { Injectable } from "@angular/core";
+import { env } from "../../environments/environment";
+import { createTransactionModel, Transaction } from "../models/transaction-model";
+import { Observable } from "rxjs/internal/Observable";
+import { ApiResponse } from "../models/apiResponse.model";
+import { Report } from "../models/report-model";
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TransactionService {
+    private apiUrl = `${env.myFinanceApiUrl}/Transaction`;
+    constructor(private http: HttpClient) { }
+
+    createTransaction(transaction: createTransactionModel): Observable<ApiResponse<Transaction>> {
+        return this.http.post<ApiResponse<Transaction>>(this.apiUrl, transaction);
+    }
+    
+    getAllTransactions(): Observable<ApiResponse<Transaction[]>> {
+        return this.http.get<ApiResponse<Transaction[]>>(this.apiUrl);
+    }
+    
+    getTransactionById(id: string): Observable<ApiResponse<Transaction>> {
+        return this.http.get<ApiResponse<Transaction>>(`${this.apiUrl}/${id}`);
+    }
+    
+    updateTransaction(id: string, transaction: Transaction): Observable<ApiResponse<Transaction>> {
+        return this.http.put<ApiResponse<Transaction>>(`${this.apiUrl}/${id}`, transaction);
+    }
+    
+    deleteTransaction(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
+    
+    getMonthlyReport(type: 'Income' | 'Expense', year: number): Observable<ApiResponse<Report[]>> {
+        return this.http.get<ApiResponse<Report[]>>(`${this.apiUrl}/report?type=${type}&year=${year}`);
+    }
+}
+```

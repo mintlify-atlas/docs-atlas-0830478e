@@ -1,97 +1,159 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "MyFinance UI Documentation"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#3cbcab] via-[#349b8b] to-[#0099b8] dark:from-[#2a8f80] dark:via-[#256f63] dark:to-[#007a91] py-20">
+  <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
+  <div className="relative max-w-6xl mx-auto px-6 lg:px-8">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          MyFinance UI Documentation
+        </h1>
+        <p className="text-lg sm:text-xl text-white/90 max-w-2xl mb-8">
+          A modern Angular-based personal finance management application for tracking income, expenses, and generating insightful financial reports.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-white text-[#3cbcab] font-semibold hover:bg-gray-100 transition-colors no-underline"
+          >
+            Get Started
+          </a>
+          <a
+            href="/reference/overview"
+            className="inline-flex items-center px-6 py-3 rounded-lg border-2 border-white/30 bg-white/10 text-white font-semibold hover:bg-white/20 transition-colors no-underline"
+          >
+            Developer Reference
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Quick Start</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Get MyFinance UI running in minutes</p>
+  
+  <Steps>
+    <Step title="Install dependencies">
+      Clone the repository and install dependencies using pnpm.
+      
+      ```bash
+      git clone https://github.com/EnocMag/MyFinance.UI.git
+      cd MyFinance.UI
+      pnpm install
+      ```
+    </Step>
+    
+    <Step title="Configure the API endpoint">
+      Update the environment configuration to point to your MyFinance API backend.
+      
+      ```typescript src/environments/environment.ts
+      export const env = {
+        myFinanceApiUrl: 'http://localhost:5242/api'
+      }
+      ```
+      
+      <Note>Make sure your backend API is running and accessible at the configured URL.</Note>
+    </Step>
+    
+    <Step title="Start the development server">
+      Run the Angular development server.
+      
+      ```bash
+      pnpm start
+      ```
+      
+      Open your browser and navigate to `http://localhost:4200/`. The application will automatically reload when you modify source files.
+    </Step>
+    
+    <Step title="Login and start tracking">
+      Use your credentials to log in and start managing your finances. Create categories for your income and expenses, then add transactions to track your financial activity.
+    </Step>
+  </Steps>
+</div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Core Features</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Explore what MyFinance UI has to offer</p>
+  
+  <CardGroup cols={2}>
     <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      title="Transaction Management"
+      icon="money-bill-transfer"
+      href="/features/transactions"
+    >
+      Track income and expenses with detailed transaction records, categories, and date tracking.
+    </Card>
+    <Card
+      title="Category Organization"
+      icon="folder-tree"
+      href="/features/categories"
+    >
+      Organize your finances with custom categories for both income and expense transactions.
+    </Card>
+    <Card
+      title="Financial Reports"
+      icon="chart-line"
+      href="/features/reports"
+    >
+      Generate monthly reports with interactive charts to visualize your financial trends.
+    </Card>
+    <Card
+      title="Secure Authentication"
+      icon="shield-halved"
+      href="/features/authentication"
+    >
+      JWT-based authentication with route guards to protect your financial data.
+    </Card>
+  </CardGroup>
+</div>
 
-## Create beautiful pages
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Developer Resources</h2>
+  <p className="text-base text-gray-600 dark:text-gray-400 mb-8">Build and extend MyFinance UI</p>
+  
+  <CardGroup cols={3}>
+    <Card
+      title="Architecture Overview"
+      icon="building"
+      href="/reference/overview"
+    >
+      Understand the application structure and design patterns.
+    </Card>
+    <Card
+      title="Components"
+      icon="puzzle-piece"
+      href="/reference/components/transaction-form"
+    >
+      Explore the UI components and their implementation.
+    </Card>
+    <Card
+      title="Services & Models"
+      icon="code"
+      href="/reference/services/auth-service"
+    >
+      Learn about the services and data models powering the app.
+    </Card>
+  </CardGroup>
+</div>
 
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl border border-gray-200 dark:border-[#27272a] bg-gray-50 dark:bg-[#1a1d27] p-8 lg:p-12">
+    <div className="max-w-3xl">
+      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Ready to deploy?</h2>
+      <p className="text-base text-gray-600 dark:text-gray-400 mb-6">
+        MyFinance UI includes Docker support for easy deployment. Get your application running in production with our deployment guide.
+      </p>
+      <a
+        href="/deployment/docker"
+        className="inline-flex items-center px-6 py-3 rounded-lg bg-[#3cbcab] text-white font-semibold hover:bg-[#349b8b] transition-colors no-underline"
+      >
+        View Deployment Guide
+      </a>
+    </div>
+  </div>
+</div>

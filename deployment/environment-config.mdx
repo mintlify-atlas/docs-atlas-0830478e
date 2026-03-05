@@ -1,0 +1,383 @@
+---
+title: 'Environment Configuration'
+description: 'Configure API endpoints and environment-specific settings'
+icon: 'gear'
+---
+
+## Overview
+
+MyFinance UI uses environment configuration files to manage settings across different deployment environments. The application is built with Angular 21 and uses a centralized configuration approach.
+
+## Environment Files
+
+The application's environment configuration is located at:
+
+```
+src/environments/environment.ts
+```
+
+<CodeGroup>
+
+```typescript environment.ts
+export const env = {
+    myFinanceApiUrl: 'http://localhost:5242/api'
+}
+```
+
+</CodeGroup>
+
+<Note>
+Angular 21 has simplified environment configuration. Unlike previous versions, there's typically one environment file with settings that can be overridden at build time or runtime.
+</Note>
+
+## Configuration Properties
+
+### API Endpoint Configuration
+
+The primary configuration property is `myFinanceApiUrl`, which defines the backend API endpoint:
+
+| Property | Type | Description | Default Value |
+|----------|------|-------------|---------------|
+| `myFinanceApiUrl` | string | Base URL for the MyFinance API backend | `http://localhost:5242/api` |
+
+This URL is used throughout the application for HTTP requests to the backend API.
+
+## Using Environment Variables
+
+The environment configuration is imported and used in services throughout the application. For example:
+
+```typescript
+import { env } from '../environments/environment';
+
+// In your service
+private apiUrl = env.myFinanceApiUrl;
+
+// Making API calls
+this.http.get(`${this.apiUrl}/transactions`)
+```
+
+## Different Environments
+
+### Development Environment
+
+For local development, the default configuration points to `localhost:5242`:
+
+```typescript
+export const env = {
+    myFinanceApiUrl: 'http://localhost:5242/api'
+}
+```
+
+This assumes you're running the MyFinance API backend locally on port 5242.
+
+### Production Environment
+
+For production deployments, you have several options to override the API URL:
+
+<Tabs>
+  <Tab title="Build-time Configuration">
+    Create environment-specific files and modify `environment.ts` before building:
+
+    ```typescript
+    export const env = {
+        myFinanceApiUrl: 'https://api.myfinance.com/api'
+    }
+    ```
+
+    Then build the application:
+    
+    ```bash
+    pnpm run build
+    ```
+  </Tab>
+
+  <Tab title="Runtime Configuration">
+    For Docker deployments, use environment variables with a configuration script:
+
+    1. Create a `config.json` in the assets folder
+    2. Load it at application startup
+    3. Replace values using environment variables in the container
+
+    ```json
+    {
+      "apiUrl": "${API_URL}"
+    }
+    ```
+  </Tab>
+
+  <Tab title="Build Arguments">
+    Pass configuration during the Docker build:
+
+    ```dockerfile
+    ARG API_URL=https://api.myfinance.com/api
+    ENV API_URL=$API_URL
+    ```
+
+    Build with custom API URL:
+    
+    ```bash
+    docker build --build-arg API_URL=https://production-api.com/api -t myfinance-ui .
+    ```
+  </Tab>
+</Tabs>
+
+## Angular Build Configurations
+
+The application uses Angular's build configuration system defined in `angular.json`. Two main configurations are available:
+
+### Development Configuration
+
+Optimized for fast rebuilds and debugging:
+
+```json
+"development": {
+  "optimization": false,
+  "extractLicenses": false,
+  "sourceMap": true
+}
+```
+
+Build for development:
+```bash
+ng build --configuration development
+```
+
+### Production Configuration
+
+Optimized for performance and size:
+
+```json
+"production": {
+  "budgets": [
+    {
+      "type": "initial",
+      "maximumWarning": "500kB",
+      "maximumError": "1MB"
+    }
+  ],
+  "outputHashing": "all"
+}
+```
+
+Build for production:
+```bash
+ng build --configuration production
+# or simply
+pnpm run build
+```
+
+<Note>
+The production build is the default configuration as specified in `angular.json:52`.
+</Note>
+
+## Overriding Settings
+
+### Method 1: Direct File Modification
+
+The simplest approach for production deployments:
+
+<Steps>
+  <Step title="Update environment.ts">
+    Modify the environment file before building:
+    
+    ```typescript
+    export const env = {
+        myFinanceApiUrl: 'https://your-production-api.com/api'
+    }
+    ```
+  </Step>
+
+  <Step title="Build the application">
+    ```bash
+    pnpm run build
+    ```
+  </Step>
+
+  <Step title="Deploy the build artifacts">
+    The compiled application in `dist/my-finance-ui/browser` will use your production API URL.
+  </Step>
+</Steps>
+
+### Method 2: Configuration Service Pattern
+
+For more flexible runtime configuration, implement a configuration service:
+
+<Steps>
+  <Step title="Create a config.json file">
+    Add `src/assets/config.json`:
+    
+    ```json
+    {
+      "apiUrl": "http://localhost:5242/api"
+    }
+    ```
+  </Step>
+
+  <Step title="Load config at startup">
+    Create a configuration service that loads the JSON file before the app initializes.
+  </Step>
+
+  <Step title="Override in deployment">
+    Replace the `config.json` file in different environments without rebuilding.
+  </Step>
+</Steps>
+
+### Method 3: Environment Variables (Advanced)
+
+For containerized deployments, use environment variable substitution:
+
+```bash
+# In your Docker entrypoint script
+envsubst < /app/assets/config.template.json > /app/assets/config.json
+```
+
+## Security Considerations
+
+<Warning>
+Never commit sensitive credentials or API keys to environment files in version control.
+</Warning>
+
+### Best Practices
+
+<Steps>
+  <Step title="Separate sensitive data">
+    Keep API keys, secrets, and credentials in secure secret management systems (e.g., Azure Key Vault, AWS Secrets Manager).
+  </Step>
+
+  <Step title="Use environment-specific files">
+    Maintain separate configuration files for each environment:
+    - `environment.development.ts`
+    - `environment.staging.ts`
+    - `environment.production.ts`
+  </Step>
+
+  <Step title="Validate configuration">
+    Add validation to ensure required configuration values are present:
+    
+    ```typescript
+    if (!env.myFinanceApiUrl) {
+      throw new Error('API URL is not configured');
+    }
+    ```
+  </Step>
+
+  <Step title="Use HTTPS in production">
+    Always use HTTPS URLs for production API endpoints:
+    
+    ```typescript
+    export const env = {
+        myFinanceApiUrl: 'https://api.myfinance.com/api' // ✓ Secure
+        // NOT: 'http://api.myfinance.com/api' // ✗ Insecure
+    }
+    ```
+  </Step>
+</Steps>
+
+### API Security
+
+The application uses an authentication interceptor (`src/app/interceptors/auth-interceptor.ts`) to handle API authentication. Ensure your API endpoint is properly secured with:
+
+- HTTPS/TLS encryption
+- CORS policies configured correctly
+- Authentication tokens (JWT, OAuth, etc.)
+- Rate limiting
+
+## CORS Configuration
+
+If you encounter CORS errors, ensure your backend API allows requests from your frontend domain:
+
+```typescript
+// Backend CORS configuration example
+app.UseCors(policy => policy
+    .WithOrigins("http://localhost:4200", "https://myfinance.app")
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials());
+```
+
+## Testing Configuration
+
+### Local Testing
+
+Test with the default local API:
+
+```bash
+pnpm start
+```
+
+The application will run on `http://localhost:4200` and connect to `http://localhost:5242/api`.
+
+### Testing Different Environments
+
+To test with a different API endpoint without modifying files:
+
+1. Temporarily update `environment.ts`
+2. Run the development server
+3. Revert changes when done
+
+```bash
+# Start development server
+ng serve
+```
+
+## Common Configuration Scenarios
+
+### Scenario 1: Different Backend Ports
+
+```typescript
+// Backend running on port 3000
+export const env = {
+    myFinanceApiUrl: 'http://localhost:3000/api'
+}
+```
+
+### Scenario 2: Remote Development Server
+
+```typescript
+// Connect to a remote development server
+export const env = {
+    myFinanceApiUrl: 'https://dev.myfinance.com/api'
+}
+```
+
+### Scenario 3: Production Deployment
+
+```typescript
+// Production API with custom domain
+export const env = {
+    myFinanceApiUrl: 'https://api.myfinance.app/api'
+}
+```
+
+## Troubleshooting
+
+### API Connection Issues
+
+<AccordionGroup>
+  <Accordion title="CORS errors in browser console">
+    Ensure your backend API has CORS configured to allow requests from your frontend domain.
+  </Accordion>
+
+  <Accordion title="404 errors on API calls">
+    Verify the `myFinanceApiUrl` is correct and includes the `/api` path if required by your backend.
+  </Accordion>
+
+  <Accordion title="Connection refused errors">
+    Check that your backend API is running and accessible at the configured URL and port.
+  </Accordion>
+
+  <Accordion title="Mixed content warnings (HTTP/HTTPS)">
+    If your frontend is served over HTTPS, ensure your API URL also uses HTTPS.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Docker Deployment" icon="docker" href="/deployment/docker">
+    Deploy the application using Docker
+  </Card>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Set up your local development environment
+  </Card>
+</CardGroup>

@@ -1,0 +1,202 @@
+---
+title: 'AuthService'
+description: 'Authentication service for JWT token management'
+---
+
+## Overview
+
+The `AuthService` handles user authentication, JWT token storage, and session validation. It provides methods for logging in, logging out, and checking authentication status.
+
+## Properties
+
+<ParamField path="apiUrl" type="string" default="${env.myFinanceApiUrl}/Auth">
+  Base URL for authentication API endpoints
+</ParamField>
+
+## Methods
+
+### login()
+
+Authenticates a user with username and password credentials.
+
+```typescript
+async login(username: string, password: string): Promise<boolean>
+```
+
+<ParamField path="username" type="string" required>
+  User's username
+</ParamField>
+
+<ParamField path="password" type="string" required>
+  User's password
+</ParamField>
+
+<ResponseField name="returns" type="Promise<boolean>">
+  Returns `true` if login succeeds, `false` otherwise
+</ResponseField>
+
+**Behavior:**
+- Sends POST request to `/Auth/login`
+- Stores JWT token in localStorage as `access-token`
+- Returns `false` if request fails
+
+**Example:**
+
+```typescript
+const success = await authService.login('john.doe', 'password123');
+if (success) {
+  console.log('Login successful');
+}
+```
+
+---
+
+### logout()
+
+Logs out the current user by removing the authentication token.
+
+```typescript
+logout(): void
+```
+
+**Behavior:**
+- Removes `access-token` from localStorage
+- Does not make API calls
+
+**Example:**
+
+```typescript
+authService.logout();
+```
+
+---
+
+### isLoggedIn()
+
+Checks if a user is currently authenticated with a valid token.
+
+```typescript
+isLoggedIn(): boolean
+```
+
+<ResponseField name="returns" type="boolean">
+  Returns `true` if user has a valid, non-expired token
+</ResponseField>
+
+**Behavior:**
+- Checks for `access-token` in localStorage
+- Decodes JWT payload and validates expiration
+- Returns `false` if token is missing or expired
+
+**Example:**
+
+```typescript
+if (authService.isLoggedIn()) {
+  // User is authenticated
+}
+```
+
+---
+
+### getToken()
+
+Retrieves the current JWT authentication token.
+
+```typescript
+getToken(): string | null
+```
+
+<ResponseField name="returns" type="string | null">
+  Returns the JWT token string, or `null` if not authenticated
+</ResponseField>
+
+**Example:**
+
+```typescript
+const token = authService.getToken();
+if (token) {
+  // Use token for API requests
+}
+```
+
+## JWT Token Handling
+
+The service stores JWT tokens in `localStorage` with the key `access-token`. The token payload is decoded to check expiration:
+
+```typescript
+const payload = JSON.parse(atob(token.split('.')[1]));
+const isValid = payload.exp > Date.now() / 1000;
+```
+
+## API Endpoints
+
+<ResponseField name="POST /Auth/login" type="endpoint">
+  Authenticates user and returns JWT token
+  
+  **Request Body:**
+  ```typescript
+  {
+    username: string;
+    password: string;
+  }
+  ```
+  
+  **Response:**
+  ```typescript
+  {
+    token: string;
+  }
+  ```
+</ResponseField>
+
+## Source Code
+
+Location: `src/app/services/Auth-service.ts`
+
+```typescript
+import { Injectable } from "@angular/core";
+import { env } from "../../environments/environment";
+import { AuthModel } from "../models/Auth.model";
+
+@Injectable({
+    providedIn: 'root'
+})
+export class AuthService {
+    private apiUrl = `${env.myFinanceApiUrl}/Auth`;
+    constructor() {}
+
+    async login(username: string, password: string) : Promise<boolean> {
+        const tokenResponse = await fetch(`${this.apiUrl}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+        if (!tokenResponse.ok) {
+            console.error('Login failed:', tokenResponse.statusText);
+            return false;
+        }
+        const tokenData: AuthModel = await tokenResponse.json();
+        localStorage.setItem('access-token', tokenData.token);
+        return true;
+    }
+    
+    isLoggedIn(): boolean {
+        const token = localStorage.getItem('access-token') !== null;
+        if (!token) {
+            return false;
+        }
+        const payload = JSON.parse(atob(localStorage.getItem('access-token')!.split('.')[1]));
+        return payload.exp > Date.now() / 1000;
+    }
+    
+    getToken(): string | null {
+        return localStorage.getItem('access-token');
+    }
+    
+    logout(): void {
+        localStorage.removeItem('access-token');
+    }
+}
+```

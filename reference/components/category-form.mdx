@@ -1,0 +1,201 @@
+---
+title: CategoryForm Component
+description: Component for creating and managing transaction categories with type-based classification
+---
+
+## Overview
+
+The `CategoryForm` component provides a simple reactive form interface for creating transaction categories. It allows users to define categories with a name and type (Income or Expense) for organizing financial transactions.
+
+**Location**: `~/workspace/source/src/app/components/category-form/category-form.ts:12`
+
+## Component Metadata
+
+```typescript
+@Component({
+  selector: 'app-category-form',
+  imports: [ReactiveFormsModule],
+  templateUrl: './category-form.html',
+  styleUrl: './category-form.css',
+})
+```
+
+## Dependencies
+
+The component uses constructor injection for the CategoryService:
+
+```typescript
+constructor(private categoryService: CategoryService) { }
+```
+
+## Form Structure
+
+The category form is a simple two-field reactive form:
+
+```typescript
+categoryForm = new FormGroup({
+  name: new FormControl('', [Validators.required]),
+  type: new FormControl('', [Validators.required])
+});
+```
+
+### Form Controls
+
+| Control | Type | Validators | Initial State | Description |
+|---------|------|------------|---------------|-------------|
+| `name` | `FormControl<string>` | `required` | `''` | Category name |
+| `type` | `FormControl<string>` | `required` | `''` | Category type (Income/Expense) |
+
+## Form Control Getters
+
+Convenience getters for accessing form controls:
+
+```typescript
+get name() {
+  return this.categoryForm.controls.name;
+}
+get type() {
+  return this.categoryForm.controls.type;
+}
+```
+
+**Usage**: These getters simplify access to form controls in both the component class and template.
+
+## Methods
+
+### setType
+
+Programmatically sets the category type:
+
+```typescript
+setType(value: 'Income' | 'Expense') {
+  this.type?.setValue(value);
+  this.type?.markAsTouched();
+}
+```
+
+**Parameters**:
+- `value`: Either `'Income'` or `'Expense'`
+
+**Behavior**:
+- Sets the type control value
+- Marks the control as touched to trigger validation display
+
+**Use Case**: Typically called from template buttons or UI interactions to set the transaction type.
+
+### onSubmit
+
+Handles form submission and category creation:
+
+```typescript
+onSubmit() {
+  if (this.categoryForm.invalid) return;
+  const categoryData: CategoryRequest = {
+    name: this.name.value,
+    type: this.type.value as 'Income' | 'Expense'
+  }
+
+  this.categoryService.createCategory(categoryData).subscribe({
+    next: (response) => {
+      this.categoryForm.reset();
+      console.log('Category created successfully:', response);
+    }
+  });
+}
+```
+
+**Behavior**:
+1. Validates the form before proceeding
+2. Creates a `CategoryRequest` object from form values
+3. Calls the `CategoryService.createCategory()` method
+4. On success:
+   - Resets the form to initial state
+   - Logs success message to console
+
+**Validation**: Returns early if form is invalid, preventing submission.
+
+## Data Models
+
+### CategoryRequest
+
+The form submits data using the `CategoryRequest` model:
+
+```typescript
+interface CategoryRequest {
+  name: string | null;
+  type: 'Income' | 'Expense';
+}
+```
+
+## CRUD Operations
+
+### Create
+
+The component handles category creation through the `onSubmit()` method:
+
+```typescript
+this.categoryService.createCategory(categoryData).subscribe({
+  next: (response) => {
+    this.categoryForm.reset();
+    console.log('Category created successfully:', response);
+  }
+});
+```
+
+**Note**: Update, delete, and read operations are not implemented in this component. This is a create-only form.
+
+## Type Selection
+
+The component supports two category types:
+
+- **Income**: For revenue and earning categories
+- **Expense**: For spending and cost categories
+
+Type selection is handled through:
+1. Direct form control binding in templates
+2. The `setType()` method for programmatic selection
+
+## Form Validation
+
+Both fields are required:
+
+- **Name**: Must not be empty
+- **Type**: Must be either 'Income' or 'Expense'
+
+The form prevents submission when invalid:
+
+```typescript
+if (this.categoryForm.invalid) return;
+```
+
+## Usage Example
+
+```typescript
+import { CategoryForm } from './components/category-form/category-form';
+
+// In your template
+<app-category-form></app-category-form>
+```
+
+## Integration Points
+
+### With CategoryService
+
+The component depends on `CategoryService` for:
+- Creating new categories via `createCategory()`
+
+### With TransactionForm
+
+Categories created here are used by:
+- [TransactionForm](/reference/components/transaction-form) - For categorizing transactions
+
+## Best Practices
+
+1. **Form Reset**: Always reset the form after successful submission to clear user input
+2. **Validation**: Check form validity before submission
+3. **Type Safety**: Use type assertions when extracting typed values from form controls
+
+## Related Components
+
+- [TransactionForm](/reference/components/transaction-form) - Uses categories from this component
+- [CategoryService](/reference/services/category-service) - Backend service for category operations

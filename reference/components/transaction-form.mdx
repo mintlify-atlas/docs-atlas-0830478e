@@ -1,0 +1,228 @@
+---
+title: TransactionForm Component
+description: Component for creating and managing financial transactions with form validation and category integration
+---
+
+## Overview
+
+The `TransactionForm` component provides a reactive form interface for creating financial transactions. It supports both income and expense types with dynamic category selection, date picking, and comprehensive form validation.
+
+**Location**: `~/workspace/source/src/app/components/transaction-form/transaction-form.ts:19`
+
+## Component Metadata
+
+```typescript
+@Component({
+  selector: 'app-transaction-form',
+  imports: [ReactiveFormsModule, UiDropdown, FlatpickrDirective],
+  templateUrl: './transaction-form.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+```
+
+**Change Detection**: Uses `OnPush` strategy for optimized performance.
+
+## Dependencies
+
+The component injects the following services:
+
+```typescript
+private categoryService = inject(CategoryService);
+private transactionService = inject(TransactionService);
+private toastService = inject(ToastService);
+```
+
+## Form Structure
+
+The transaction form consists of five main controls:
+
+```typescript
+transactionForm = new FormGroup({
+  date: new FormControl(null, [
+    Validators.required,
+  ]),
+  amount: new FormControl(null, {
+    validators: [Validators.required, Validators.min(1)]
+  }),
+  type: new FormControl('', [
+    Validators.required,
+  ]),
+  description: new FormControl(null),
+  category: new FormControl({value: null, disabled: true }, {
+    validators: [Validators.required, Validators.min(1)],
+  }),
+});
+```
+
+### Form Controls
+
+| Control | Type | Validators | Initial State | Description |
+|---------|------|------------|---------------|-------------|
+| `date` | `FormControl` | `required` | `null` | Transaction date (uses Flatpickr directive) |
+| `amount` | `FormControl` | `required`, `min(1)` | `null` | Transaction amount |
+| `type` | `FormControl` | `required` | `''` | Transaction type (Income/Expense) |
+| `description` | `FormControl` | None | `null` | Optional transaction description |
+| `category` | `FormControl` | `required`, `min(1)` | `null` (disabled) | Category ID |
+
+## State Management
+
+### Signals
+
+```typescript
+categories = signal<Category[]>([]);
+```
+
+Stores the list of categories filtered by transaction type.
+
+### Properties
+
+```typescript
+selectedCategory: Category | null = null;
+```
+
+Tracks the currently selected category from the dropdown.
+
+## Lifecycle Hooks
+
+### ngOnInit
+
+Initializes the form and sets up reactive category loading:
+
+```typescript
+ngOnInit() {
+  this.category.disable();
+
+  this.type.valueChanges.subscribe(type => {
+    if (!type) return;
+    
+    this.category.reset();
+    this.category.enable();
+
+    this.categoryService.getCategoriesByType(type).subscribe(response => {
+      this.categories.set(response.data);
+    })
+  });
+}
+```
+
+**Behavior**:
+1. Disables the category dropdown initially
+2. Listens for type changes
+3. When type is selected, enables category dropdown
+4. Fetches and updates categories based on selected type
+
+## Methods
+
+### Form Control Getters
+
+Convenience getters for accessing form controls:
+
+```typescript
+get date() {
+  return this.transactionForm.controls.date;
+}
+get amount() {
+  return this.transactionForm.controls.amount;
+}
+get type() {
+  return this.transactionForm.controls.type;
+}
+get description() {
+  return this.transactionForm.controls.description;
+}
+get category() {
+  return this.transactionForm.controls.category;
+}
+```
+
+### setType
+
+Programmatically sets the transaction type:
+
+```typescript
+setType(value: 'Income' | 'Expense') {
+  this.type?.setValue(value);
+  this.type?.markAsTouched();
+}
+```
+
+**Parameters**:
+- `value`: Either `'Income'` or `'Expense'`
+
+### formatCategoryOption
+
+Formats category objects for dropdown display:
+
+```typescript
+formatCategoryOption = (category: Category): string => {
+  return `${category.name}`;
+};
+```
+
+### onCategorySelected
+
+Handles category selection from dropdown:
+
+```typescript
+onCategorySelected(category: Category): void {
+  this.selectedCategory = category;
+}
+```
+
+### onSubmit
+
+Handles form submission and transaction creation:
+
+```typescript
+onSubmit() {
+  if (this.transactionForm.invalid) return;
+
+  const transaction: createTransactionModel = {
+    date: this.date.value ?? undefined,
+    amount: this.amount.value!,
+    type: this.type.value as 'Income' | 'Expense',
+    description: this.description.value ?? undefined,
+    categoryId: this.category.value!,
+  }
+
+  this.transactionService.createTransaction(transaction).subscribe({
+    next: (response) => {
+      this.transactionForm.reset();
+      this.toastService.success('Transaction created successfully');
+      console.log('Transaction created successfully:', response);
+    }
+  });
+}
+```
+
+**Behavior**:
+1. Validates form before submission
+2. Creates transaction model from form values
+3. Calls transaction service to create transaction
+4. On success: resets form and shows success toast
+5. Logs response to console
+
+## Integration with Custom Components
+
+### UiDropdown
+
+Used for category selection with custom formatting and selection handling.
+
+### FlatpickrDirective
+
+Provides enhanced date picker functionality for the date field.
+
+## Usage Example
+
+```typescript
+import { TransactionForm } from './components/transaction-form/transaction-form';
+
+// In your template
+<app-transaction-form></app-transaction-form>
+```
+
+## Related Components
+
+- [CategoryForm](/reference/components/category-form) - For managing categories
+- [TransactionReports](/reference/components/reports) - For viewing transactions
+- [UiDropdown](/reference/components/ui-dropdown) - Custom dropdown component

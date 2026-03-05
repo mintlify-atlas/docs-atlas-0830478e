@@ -1,0 +1,312 @@
+---
+title: 'Data Models'
+description: 'TypeScript interfaces for MyFinance UI'
+---
+
+## Overview
+
+This page documents all TypeScript interfaces used throughout the MyFinance application. These models define the structure of data for transactions, categories, reports, and API responses.
+
+## Transaction Models
+
+### Transaction
+
+The main transaction interface representing a complete financial transaction.
+
+```typescript
+interface Transaction {
+  id: number;
+  date: Date;
+  amount: number;
+  type: 'Income' | 'Expense';
+  description?: string;
+  categoryId: number;
+  category?: Category;
+  categoryNameSnapshot?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+```
+
+<Expandable title="Transaction Properties">
+  <ParamField path="id" type="number" required>
+    Unique transaction identifier
+  </ParamField>
+
+  <ParamField path="date" type="Date" required>
+    Transaction date
+  </ParamField>
+
+  <ParamField path="amount" type="number" required>
+    Transaction amount (positive number)
+  </ParamField>
+
+  <ParamField path="type" type="'Income' | 'Expense'" required>
+    Type of transaction
+  </ParamField>
+
+  <ParamField path="description" type="string">
+    Optional description or notes
+  </ParamField>
+
+  <ParamField path="categoryId" type="number" required>
+    Foreign key to category
+  </ParamField>
+
+  <ParamField path="category" type="Category">
+    Populated category object (if included)
+  </ParamField>
+
+  <ParamField path="categoryNameSnapshot" type="string">
+    Snapshot of category name at transaction creation time
+  </ParamField>
+
+  <ParamField path="createdAt" type="Date">
+    Timestamp of creation
+  </ParamField>
+
+  <ParamField path="updatedAt" type="Date">
+    Timestamp of last update
+  </ParamField>
+</Expandable>
+
+---
+
+### createTransactionModel
+
+Interface for creating a new transaction (subset of Transaction).
+
+```typescript
+interface createTransactionModel {
+  date?: string;
+  amount: number;
+  type: 'Income' | 'Expense';
+  description?: string;
+  categoryId: number;
+}
+```
+
+<Expandable title="createTransactionModel Properties">
+  <ParamField path="date" type="string">
+    Optional date string (defaults to current date if omitted)
+  </ParamField>
+
+  <ParamField path="amount" type="number" required>
+    Transaction amount
+  </ParamField>
+
+  <ParamField path="type" type="'Income' | 'Expense'" required>
+    Type of transaction
+  </ParamField>
+
+  <ParamField path="description" type="string">
+    Optional description
+  </ParamField>
+
+  <ParamField path="categoryId" type="number" required>
+    Category ID
+  </ParamField>
+</Expandable>
+
+**Example:**
+
+```typescript
+const newTransaction: createTransactionModel = {
+  amount: 75.50,
+  type: 'Expense',
+  description: 'Coffee and lunch',
+  categoryId: 3,
+  date: '2026-03-05'
+};
+```
+
+## Category Models
+
+### Category
+
+Interface representing a transaction category.
+
+```typescript
+interface Category {
+  id: number;
+  name: string | null;
+  type: 'Income' | 'Expense';
+}
+```
+
+<Expandable title="Category Properties">
+  <ParamField path="id" type="number" required>
+    Unique category identifier
+  </ParamField>
+
+  <ParamField path="name" type="string | null" required>
+    Category name (nullable)
+  </ParamField>
+
+  <ParamField path="type" type="'Income' | 'Expense'" required>
+    Category type
+  </ParamField>
+</Expandable>
+
+---
+
+### CategoryRequest
+
+Interface for creating a new category (without ID).
+
+```typescript
+interface CategoryRequest {
+  name: string | null;
+  type: 'Income' | 'Expense';
+}
+```
+
+<Expandable title="CategoryRequest Properties">
+  <ParamField path="name" type="string | null" required>
+    Category name
+  </ParamField>
+
+  <ParamField path="type" type="'Income' | 'Expense'" required>
+    Category type
+  </ParamField>
+</Expandable>
+
+**Example:**
+
+```typescript
+const newCategory: CategoryRequest = {
+  name: 'Utilities',
+  type: 'Expense'
+};
+```
+
+## Report Models
+
+### Report
+
+Interface for monthly financial reports.
+
+```typescript
+interface Report {
+  year: number;
+  month: number;
+  total: number;
+}
+```
+
+<Expandable title="Report Properties">
+  <ParamField path="year" type="number" required>
+    Report year (e.g., 2026)
+  </ParamField>
+
+  <ParamField path="month" type="number" required>
+    Report month (1-12)
+  </ParamField>
+
+  <ParamField path="total" type="number" required>
+    Total amount for the month
+  </ParamField>
+</Expandable>
+
+**Example:**
+
+```typescript
+const monthlyReport: Report = {
+  year: 2026,
+  month: 3,
+  total: 2450.75
+};
+```
+
+## API Response Models
+
+### ApiResponse
+
+Generic wrapper for all API responses.
+
+```typescript
+interface ApiResponse<T> {
+  data: T;
+  message: string;
+  state: string;
+  isError: boolean;
+  isSuccess: boolean;
+  errors: any[];
+}
+```
+
+<Expandable title="ApiResponse Properties">
+  <ParamField path="data" type="T" required>
+    The response payload (generic type)
+  </ParamField>
+
+  <ParamField path="message" type="string" required>
+    Response message
+  </ParamField>
+
+  <ParamField path="state" type="string" required>
+    Response state
+  </ParamField>
+
+  <ParamField path="isError" type="boolean" required>
+    Whether the request resulted in an error
+  </ParamField>
+
+  <ParamField path="isSuccess" type="boolean" required>
+    Whether the request was successful
+  </ParamField>
+
+  <ParamField path="errors" type="any[]" required>
+    Array of error objects (if any)
+  </ParamField>
+</Expandable>
+
+**Example:**
+
+```typescript
+const response: ApiResponse<Transaction[]> = {
+  data: [
+    { id: 1, amount: 100, type: 'Income', categoryId: 1, date: new Date() },
+    { id: 2, amount: 50, type: 'Expense', categoryId: 2, date: new Date() }
+  ],
+  message: 'Transactions retrieved successfully',
+  state: 'success',
+  isError: false,
+  isSuccess: true,
+  errors: []
+};
+```
+
+## Authentication Models
+
+### AuthModel
+
+Interface for authentication responses containing JWT tokens.
+
+```typescript
+interface AuthModel {
+  token: string;
+}
+```
+
+<Expandable title="AuthModel Properties">
+  <ParamField path="token" type="string" required>
+    JWT authentication token
+  </ParamField>
+</Expandable>
+
+**Example:**
+
+```typescript
+const authResponse: AuthModel = {
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+};
+```
+
+## Source Code Locations
+
+- **Transaction Models:** `src/app/models/transaction-model.ts`
+- **Category Models:** `src/app/models/category-model.ts`
+- **Report Model:** `src/app/models/report-model.ts`
+- **ApiResponse Model:** `src/app/models/apiResponse.model.ts`
+- **Auth Model:** `src/app/models/Auth.model.ts`

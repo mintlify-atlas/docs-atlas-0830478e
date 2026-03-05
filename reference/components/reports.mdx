@@ -1,0 +1,287 @@
+---
+title: TransactionReports Component
+description: Component for viewing, filtering, and managing transaction reports with date range filtering
+---
+
+## Overview
+
+The `TransactionReports` component provides a comprehensive interface for viewing transaction data with filtering capabilities. It supports date range filtering and basic CRUD operations on transactions.
+
+**Location**: `~/workspace/source/src/app/components/transaction-reports/transaction-reports.ts:15`
+
+## Component Metadata
+
+```typescript
+@Component({
+  selector: 'app-transaction-reports',
+  imports: [CommonModule, ConfirmationDialog, FormsModule],
+  templateUrl: './transaction-reports.html',
+  styleUrl: './transaction-reports.css',
+})
+```
+
+## Dependencies
+
+The component uses constructor injection:
+
+```typescript
+constructor(private transactionService: TransactionService) {}
+```
+
+**Required Modules**:
+- `CommonModule`: For common Angular directives
+- `ConfirmationDialog`: Custom dialog component for confirmations
+- `FormsModule`: For two-way data binding with filters
+
+## State Management
+
+### Observables
+
+```typescript
+public transactions$: Observable<Transaction[]> | undefined = undefined;
+```
+
+Streams transaction data to the template using the async pipe pattern.
+
+### Properties
+
+```typescript
+public startDate: string = '';
+public endDate: string = '';
+private allTransactions: Transaction[] = [];
+isDialogOpen: boolean = false;
+```
+
+| Property | Type | Visibility | Description |
+|----------|------|------------|-------------|
+| `transactions$` | `Observable<Transaction[]>` | public | Observable stream of filtered transactions |
+| `startDate` | `string` | public | Start date for filtering (bound to input) |
+| `endDate` | `string` | public | End date for filtering (bound to input) |
+| `allTransactions` | `Transaction[]` | private | Cache of all transactions for client-side filtering |
+| `isDialogOpen` | `boolean` | public | Controls confirmation dialog visibility |
+
+## Lifecycle Hooks
+
+### ngOnInit
+
+Initializes the component by fetching all transactions:
+
+```typescript
+ngOnInit(): void {
+  this.transactions$ = this.transactionService.getAllTransactions().pipe(map(res => {
+    this.allTransactions = res.data;
+    return res.data;
+  }));
+}
+```
+
+**Behavior**:
+1. Fetches all transactions from the service
+2. Caches data in `allTransactions` for filtering
+3. Sets up the observable stream for template rendering
+
+## Filtering Methods
+
+### filterByDate
+
+Filters transactions based on selected date range:
+
+```typescript
+filterByDate(): void {
+  if (!this.startDate && !this.endDate) {
+    this.transactions$ = this.transactionService.getAllTransactions().pipe(map(res => res.data));
+    return;
+  }
+
+  const start = this.startDate ? new Date(this.startDate) : new Date('1900-01-01');
+  const end = this.endDate ? new Date(this.endDate) : new Date('2100-12-31');
+
+  const filtered = this.allTransactions.filter(transaction => {
+    const transactionDate = new Date(transaction.date);
+    return transactionDate >= start && transactionDate <= end;
+  });
+
+  this.transactions$ = new Observable(observer => {
+    observer.next(filtered);
+    observer.complete();
+  });
+}
+```
+
+**Behavior**:
+1. If no dates selected, shows all transactions
+2. Uses default dates if only one boundary is set:
+   - Start: `1900-01-01` (if not specified)
+   - End: `2100-12-31` (if not specified)
+3. Filters cached transactions client-side
+4. Creates new observable with filtered results
+
+**Date Range Logic**:
+- Inclusive of both start and end dates
+- Supports partial ranges (only start or only end date)
+
+### clearFilters
+
+Resets all filters and reloads all transactions:
+
+```typescript
+clearFilters(): void {
+  this.startDate = '';
+  this.endDate = '';
+  this.transactions$ = this.transactionService.getAllTransactions().pipe(map(res => res.data));
+}
+```
+
+**Behavior**:
+1. Clears date filter inputs
+2. Reloads all transactions from service
+3. Updates the observable stream
+
+## CRUD Operations
+
+### editTransaction
+
+Placeholder for transaction editing:
+
+```typescript
+editTransaction(transaction: Transaction): void {
+  // TODO: Implement edit transaction logic
+  console.log('Edit transaction:', transaction);
+}
+```
+
+**Status**: Not yet implemented
+
+**Parameters**:
+- `transaction`: The transaction object to edit
+
+### deleteTransaction
+
+Initiates transaction deletion with confirmation:
+
+```typescript
+deleteTransaction(transactionId: number): void {
+  // TODO: Implement delete transaction logic
+  this.isDialogOpen = true;
+  console.log('Delete transaction with ID:', transactionId);
+}
+```
+
+**Status**: Partially implemented (confirmation dialog only)
+
+**Parameters**:
+- `transactionId`: The ID of the transaction to delete
+
+**Behavior**:
+1. Opens confirmation dialog
+2. Logs transaction ID to console
+
+### handleConfirm
+
+Handles confirmation dialog acceptance:
+
+```typescript
+handleConfirm(): void {
+  this.isDialogOpen = false;
+  console.log('Transaction deleted');
+  // TODO: Add logic to delete the transaction
+}
+```
+
+**Status**: Not yet implemented
+
+**TODO**: Add actual deletion logic via TransactionService
+
+### handleCancel
+
+Handles confirmation dialog cancellation:
+
+```typescript
+handleCancel(): void {
+  this.isDialogOpen = false;
+  console.log('Deletion cancelled');
+  // TODO: Add logic to cancel deletion
+}
+```
+
+**Behavior**: Closes dialog and cancels deletion
+
+## Data Flow
+
+```
+ngOnInit()
+  ↓
+TransactionService.getAllTransactions()
+  ↓
+Cache in allTransactions[]
+  ↓
+Stream to transactions$
+  ↓
+Template (async pipe)
+```
+
+### Filtering Flow
+
+```
+User selects date range
+  ↓
+filterByDate() called
+  ↓
+Filter allTransactions[] array
+  ↓
+Create new Observable
+  ↓
+Update transactions$
+  ↓
+Template updates automatically
+```
+
+## Report Generation Logic
+
+The component generates reports through:
+
+1. **Initial Load**: Fetches all transactions on initialization
+2. **Date Filtering**: Client-side filtering based on date range
+3. **Dynamic Updates**: Observable pattern ensures template stays in sync
+
+## Data Fetching Strategy
+
+- **Initial Load**: Server fetch via `getAllTransactions()`
+- **Filtering**: Client-side filtering of cached data
+- **Filter Reset**: Re-fetches from server
+
+**Performance Consideration**: All transactions are loaded once and filtered client-side. For large datasets, consider server-side filtering.
+
+## Integration with ConfirmationDialog
+
+The component uses a custom confirmation dialog:
+
+```typescript
+imports: [CommonModule, ConfirmationDialog, FormsModule]
+```
+
+**Dialog State**:
+- Controlled by `isDialogOpen` boolean
+- Opens on delete action
+- Closes on confirm or cancel
+
+## Usage Example
+
+```typescript
+import { TransactionReports } from './components/transaction-reports/transaction-reports';
+
+// In your template
+<app-transaction-reports></app-transaction-reports>
+```
+
+## Best Practices
+
+1. **Caching**: Component caches all transactions to avoid repeated server calls during filtering
+2. **Observable Pattern**: Uses observables with async pipe for reactive updates
+3. **User Confirmation**: Implements confirmation dialog before destructive operations
+
+## Related Components
+
+- [TransactionForm](/reference/components/transaction-form) - For creating transactions
+- [ReportChart](/reference/components/charts) - For visualizing transaction data
+- [ConfirmationDialog](/reference/components/confirmation-dialog) - Dialog component used here

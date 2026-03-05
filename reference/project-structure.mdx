@@ -1,0 +1,298 @@
+---
+title: Project Structure
+description: Detailed overview of the MyFinance UI directory structure and file organization
+---
+
+## Overview
+
+MyFinance UI follows Angular's recommended project structure with a clear separation between application code, configuration, and assets. The application uses a feature-based organization within the `src/app` directory.
+
+## Root Directory Structure
+
+```
+my-finance.ui/
+├── src/
+│   ├── app/                 # Application source code
+│   ├── environments/        # Environment configuration
+│   └── index.html          # Main HTML file
+├── package.json            # Dependencies and scripts
+├── tsconfig.json           # TypeScript configuration
+├── tailwind.config.js      # Tailwind CSS configuration
+└── angular.json            # Angular CLI configuration
+```
+
+## Application Directory (`src/app/`)
+
+The main application code is organized into logical directories based on functionality:
+
+```
+src/app/
+├── components/             # UI components
+├── services/              # Business logic and data access
+├── models/                # TypeScript interfaces and types
+├── guards/                # Route guards
+├── interceptors/          # HTTP interceptors
+├── directives/            # Custom directives
+├── app.ts                 # Root component
+├── app.html               # Root template
+├── app.css                # Root styles
+├── app.routes.ts          # Route configuration
+└── app.config.ts          # Application configuration
+```
+
+## Components Directory
+
+Components are organized by feature, with each component in its own directory:
+
+```
+components/
+├── category-form/
+│   ├── category-form.ts
+│   ├── category-form.html
+│   ├── category-form.css
+│   └── category-form.spec.ts
+├── confirmation-dialog/
+│   └── confirmation-dialog.ts
+├── layout/
+│   ├── layout.ts
+│   ├── layout.html
+│   ├── layout.css
+│   └── layout.spec.ts
+├── login-form/
+│   └── login-form.ts
+├── navbar/
+│   ├── navbar.ts
+│   └── navbar.spec.ts
+├── report-chart/
+│   └── report-chart.ts
+├── toast/
+│   └── toast.ts
+├── transaction-form/
+│   └── transaction-form.ts
+├── transaction-reports/
+│   └── transaction-reports.ts
+└── ui-dropdown/
+    └── ui-dropdown.ts
+```
+
+### Component Categories
+
+<Tabs>
+  <Tab title="Feature Components">
+    **Feature Components** implement core application functionality:
+    
+    - `transaction-form/` - Create and edit financial transactions with reactive forms, category filtering, and date selection
+    - `category-form/` - Manage income and expense categories with CRUD operations
+    - `transaction-reports/` - Display transaction history with filtering and sorting capabilities
+    - `report-chart/` - Visualize financial data using Highcharts integration
+    - `login-form/` - User authentication with JWT token management
+  </Tab>
+  
+  <Tab title="Layout Components">
+    **Layout Components** provide application structure:
+    
+    - `layout/` - Main application shell that wraps authenticated pages, includes navbar and toast notifications
+    - `navbar/` - Application navigation bar with routing links
+  </Tab>
+  
+  <Tab title="UI Components">
+    **UI Components** are reusable interface elements:
+    
+    - `ui-dropdown/` - Generic dropdown component with customizable options and formatting
+    - `toast/` - Notification component for user feedback
+    - `confirmation-dialog/` - Modal dialog for user confirmations
+  </Tab>
+</Tabs>
+
+## Services Directory
+
+Services handle business logic and API communication:
+
+```
+services/
+├── Auth-service.ts          # Authentication and token management
+├── transaction-service.ts   # Transaction CRUD and reporting
+├── category-service.ts      # Category management
+└── toast-service.ts         # Notification service
+```
+
+### Service Responsibilities
+
+<AccordionGroup>
+  <Accordion title="AuthService">
+    **Location:** `services/Auth-service.ts`
+    
+    Manages user authentication and authorization:
+    - JWT token storage and retrieval
+    - Login endpoint communication
+    - Token expiration validation
+    - Logout functionality
+    
+    Key methods:
+    - `login(username, password)` - Authenticates user and stores token
+    - `isLoggedIn()` - Validates token and expiration
+    - `getToken()` - Retrieves stored JWT token
+    - `logout()` - Clears authentication state
+  </Accordion>
+  
+  <Accordion title="TransactionService">
+    **Location:** `services/transaction-service.ts`
+    
+    Handles all transaction-related operations:
+    - Create, read, update, delete transactions
+    - Monthly report generation
+    - HTTP client integration with RxJS observables
+    
+    Key methods:
+    - `createTransaction(transaction)` - Creates new transaction
+    - `getAllTransactions()` - Retrieves all user transactions
+    - `getTransactionById(id)` - Fetches single transaction
+    - `updateTransaction(id, transaction)` - Updates existing transaction
+    - `deleteTransaction(id)` - Removes transaction
+    - `getMonthlyReport(type, year)` - Generates income/expense reports
+  </Accordion>
+  
+  <Accordion title="CategoryService">
+    **Location:** `services/category-service.ts`
+    
+    Manages transaction categories:
+    - Category CRUD operations
+    - Type-based filtering (Income/Expense)
+    - API integration with typed responses
+    
+    Key methods:
+    - `createCategory(category)` - Creates new category
+    - `getAllCategories()` - Retrieves all categories
+    - `getCategoryById(id)` - Fetches single category
+    - `getCategoriesByType(type)` - Filters by Income or Expense
+    - `updateCategory(id, category)` - Updates existing category
+    - `deleteCategory(id)` - Removes category
+  </Accordion>
+  
+  <Accordion title="ToastService">
+    **Location:** `services/toast-service.ts`
+    
+    Provides user notifications:
+    - Success/error message display
+    - Centralized notification management
+    - Integration with Toast component
+  </Accordion>
+</AccordionGroup>
+
+## Models Directory
+
+TypeScript interfaces and types for type safety:
+
+```
+models/
+├── Auth.model.ts          # Authentication response types
+├── category-model.ts      # Category interfaces
+├── transaction-model.ts   # Transaction types
+├── report-model.ts        # Report data structures
+└── apiResponse.model.ts   # Generic API response wrapper
+```
+
+<Note>
+All models are TypeScript interfaces that provide compile-time type checking and improved IDE support. They ensure type safety across service calls and component interactions.
+</Note>
+
+## Guards Directory
+
+Route protection implementation:
+
+```
+guards/
+├── auth-guard.ts          # Functional route guard
+└── auth-guard.spec.ts     # Guard unit tests
+```
+
+The `authGuard` is a functional guard (`CanActivateFn`) that:
+- Checks authentication status before route activation
+- Redirects unauthenticated users to `/login`
+- Uses dependency injection to access `AuthService`
+
+See `guards/auth-guard.ts:5-15` for implementation.
+
+## Interceptors Directory
+
+HTTP request/response handling:
+
+```
+interceptors/
+├── auth-interceptor.ts       # JWT token injection
+└── auth-interceptor.spec.ts  # Interceptor tests
+```
+
+The `authInterceptor` is a functional interceptor (`HttpInterceptorFn`) that:
+- Automatically adds Authorization header with JWT token
+- Skips token injection for `/login` endpoint
+- Clones requests to add authentication headers
+
+See `interceptors/auth-interceptor.ts:5-23` for implementation.
+
+## Directives Directory
+
+Custom attribute directives:
+
+```
+directives/
+├── flatpickr-directive.ts       # Date picker integration
+└── flatpickr-directive.spec.ts  # Directive tests
+```
+
+The `FlatpickrDirective` provides:
+- Seamless Flatpickr integration for date inputs
+- Consistent date formatting across the application
+- Lifecycle management for Flatpickr instances
+- Standalone directive architecture
+
+Usage example:
+```html
+<input type="text" appFlatpickr formControlName="date" />
+```
+
+## Root Application Files
+
+<CardGroup cols={2}>
+  <Card title="app.ts" icon="code">
+    Root component with RouterOutlet and application title signal
+  </Card>
+  <Card title="app.routes.ts" icon="route">
+    Application routing configuration with lazy-loaded components
+  </Card>
+  <Card title="app.config.ts" icon="gear">
+    Application-level providers and configuration
+  </Card>
+  <Card title="app.html" icon="file-code">
+    Root template with router outlet
+  </Card>
+</CardGroup>
+
+## Testing Files
+
+Test files follow the `.spec.ts` naming convention and are co-located with their source files:
+
+- `*.spec.ts` - Unit tests for components, services, guards, etc.
+- Vitest is configured as the test runner
+- Tests use Angular testing utilities
+
+## Best Practices
+
+<Warning>
+**File Naming Convention:** All TypeScript files use lowercase with hyphens (kebab-case), except for model files which may use PascalCase for clarity (e.g., `Auth.model.ts`).
+</Warning>
+
+<Tip>
+**Co-location:** Related files (component, template, styles, tests) are kept in the same directory for better maintainability and discoverability.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Routing Configuration" icon="route" href="/reference/routing">
+    Learn about route definitions and navigation
+  </Card>
+  <Card title="Architecture Overview" icon="sitemap" href="/reference/overview">
+    Understand the overall application architecture
+  </Card>
+</CardGroup>

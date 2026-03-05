@@ -1,0 +1,260 @@
+---
+title: 'CategoryService'
+description: 'Service for managing transaction categories'
+---
+
+## Overview
+
+The `CategoryService` provides methods for creating, reading, updating, and deleting categories. Categories are used to organize transactions by type (Income or Expense).
+
+## Properties
+
+<ParamField path="apiUrl" type="string" default="${env.myFinanceApiUrl}/Category">
+  Base URL for category API endpoints
+</ParamField>
+
+## Methods
+
+### createCategory()
+
+Creates a new category.
+
+```typescript
+createCategory(category: CategoryRequest): Observable<ApiResponse<Category>>
+```
+
+<ParamField path="category" type="CategoryRequest" required>
+  Category data to create
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Category>>">
+  Observable emitting the created category wrapped in ApiResponse
+</ResponseField>
+
+**Example:**
+
+```typescript
+const newCategory: CategoryRequest = {
+  name: 'Groceries',
+  type: 'Expense'
+};
+
+categoryService.createCategory(newCategory).subscribe({
+  next: (response) => console.log('Created:', response.data),
+  error: (err) => console.error('Error:', err)
+});
+```
+
+---
+
+### getAllCategories()
+
+Retrieves all categories.
+
+```typescript
+getAllCategories(): Observable<ApiResponse<Category[]>>
+```
+
+<ResponseField name="returns" type="Observable<ApiResponse<Category[]>>">
+  Observable emitting array of all categories
+</ResponseField>
+
+**Example:**
+
+```typescript
+categoryService.getAllCategories().subscribe({
+  next: (response) => {
+    const categories = response.data;
+    console.log(`Found ${categories.length} categories`);
+  }
+});
+```
+
+---
+
+### getCategoryById()
+
+Retrieves a single category by ID.
+
+```typescript
+getCategoryById(id: string): Observable<ApiResponse<Category>>
+```
+
+<ParamField path="id" type="string" required>
+  Category ID
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Category>>">
+  Observable emitting the requested category
+</ResponseField>
+
+**Example:**
+
+```typescript
+categoryService.getCategoryById('5').subscribe({
+  next: (response) => console.log('Category:', response.data)
+});
+```
+
+---
+
+### getCategoriesByType()
+
+Retrieves all categories of a specific type.
+
+```typescript
+getCategoriesByType(type: string): Observable<ApiResponse<Category[]>>
+```
+
+<ParamField path="type" type="string" required>
+  Category type ('Income' or 'Expense')
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Category[]>>">
+  Observable emitting array of categories matching the type
+</ResponseField>
+
+**Example:**
+
+```typescript
+categoryService.getCategoriesByType('Expense').subscribe({
+  next: (response) => {
+    const expenseCategories = response.data;
+    console.log('Expense categories:', expenseCategories);
+  }
+});
+```
+
+---
+
+### updateCategory()
+
+Updates an existing category.
+
+```typescript
+updateCategory(id: string, category: Category): Observable<ApiResponse<Category>>
+```
+
+<ParamField path="id" type="string" required>
+  Category ID to update
+</ParamField>
+
+<ParamField path="category" type="Category" required>
+  Updated category data
+</ParamField>
+
+<ResponseField name="returns" type="Observable<ApiResponse<Category>>">
+  Observable emitting the updated category
+</ResponseField>
+
+**Example:**
+
+```typescript
+const updatedCategory: Category = {
+  id: 5,
+  name: 'Food & Groceries',
+  type: 'Expense'
+};
+
+categoryService.updateCategory('5', updatedCategory).subscribe({
+  next: (response) => console.log('Updated:', response.data)
+});
+```
+
+---
+
+### deleteCategory()
+
+Deletes a category by ID.
+
+```typescript
+deleteCategory(id: string): Observable<void>
+```
+
+<ParamField path="id" type="string" required>
+  Category ID to delete
+</ParamField>
+
+<ResponseField name="returns" type="Observable<void>">
+  Observable that completes when deletion is successful
+</ResponseField>
+
+**Example:**
+
+```typescript
+categoryService.deleteCategory('5').subscribe({
+  next: () => console.log('Category deleted'),
+  error: (err) => console.error('Delete failed:', err)
+});
+```
+
+## API Endpoints
+
+<ResponseField name="POST /Category" type="endpoint">
+  Creates a new category
+</ResponseField>
+
+<ResponseField name="GET /Category" type="endpoint">
+  Retrieves all categories
+</ResponseField>
+
+<ResponseField name="GET /Category/:id" type="endpoint">
+  Retrieves a specific category
+</ResponseField>
+
+<ResponseField name="GET /Category/type/:type" type="endpoint">
+  Retrieves categories by type
+</ResponseField>
+
+<ResponseField name="PUT /Category/:id" type="endpoint">
+  Updates a category
+</ResponseField>
+
+<ResponseField name="DELETE /Category/:id" type="endpoint">
+  Deletes a category
+</ResponseField>
+
+## Source Code
+
+Location: `src/app/services/category-service.ts`
+
+```typescript
+import { HttpClient } from "@angular/common/http";
+import { Injectable } from "@angular/core";
+import { env } from "../../environments/environment";
+import { Category, CategoryRequest } from "../models/category-model";
+import { Observable } from "rxjs/internal/Observable";
+import { ApiResponse } from "../models/apiResponse.model";
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CategoryService {
+    private apiUrl = `${env.myFinanceApiUrl}/Category`;
+    constructor(private http: HttpClient) { }
+
+    createCategory(category: CategoryRequest): Observable<ApiResponse<Category>> {
+        return this.http.post<ApiResponse<Category>>(this.apiUrl, category);
+    }
+    
+    getAllCategories(): Observable<ApiResponse<Category[]>> {
+        return this.http.get<ApiResponse<Category[]>>(this.apiUrl);
+    }
+    
+    getCategoryById(id: string): Observable<ApiResponse<Category>> {
+        return this.http.get<ApiResponse<Category>>(`${this.apiUrl}/${id}`);
+    }
+    
+    getCategoriesByType(type: string): Observable<ApiResponse<Category[]>> {
+        return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/type/${type}`,);
+    }
+    
+    updateCategory(id: string, category: Category): Observable<ApiResponse<Category>> {
+        return this.http.put<ApiResponse<Category>>(`${this.apiUrl}/${id}`, category);
+    }
+    
+    deleteCategory(id: string): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
+}
+```

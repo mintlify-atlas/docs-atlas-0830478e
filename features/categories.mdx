@@ -1,0 +1,263 @@
+---
+title: Categories
+description: Create and manage categories to organize your income and expenses
+---
+
+Categories help you organize transactions into meaningful groups, making it easier to track where your money comes from and where it goes. MyFinance UI supports separate categories for Income and Expenses.
+
+## Understanding Categories
+
+Categories in MyFinance UI are typed, meaning each category belongs to either:
+
+- **Income Categories**: For tracking different sources of income (e.g., Salary, Freelance, Investments)
+- **Expense Categories**: For tracking different types of spending (e.g., Food, Rent, Transportation)
+
+<Note>
+  Categories are filtered by type when creating transactions. When you select "Income" as the transaction type, only Income categories appear in the category dropdown.
+</Note>
+
+## Creating a Category
+
+Navigate to the `/categories` route to access the category creation form.
+
+<Steps>
+  <Step title="Enter Category Name">
+    Provide a descriptive name for your category. This field is required and helps identify the purpose of the category.
+
+    ```html
+    <input type="text"
+           formControlName="name"
+           placeholder="e.g. Food, Salary, Rent"
+           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl"
+    />
+    ```
+
+    Category names should be clear and specific to make transaction categorization intuitive.
+  </Step>
+
+  <Step title="Select Category Type">
+    Choose whether this category is for **Income** or **Expense** transactions.
+
+    ```typescript
+    setType(value: 'Income' | 'Expense') {
+      this.type?.setValue(value);
+      this.type?.markAsTouched();
+    }
+    ```
+
+    The form provides a toggle interface that highlights your selection with color-coded buttons:
+    - **Income**: Green/emerald styling
+    - **Expense**: Red/rose styling
+  </Step>
+
+  <Step title="Submit the Category">
+    Click "Create Category" to save your new category.
+
+    ```typescript
+    onSubmit() {
+      if (this.categoryForm.invalid) return;
+      
+      const categoryData: CategoryRequest = {
+        name: this.name.value,
+        type: this.type.value as 'Income' | 'Expense'
+      }
+
+      this.categoryService.createCategory(categoryData).subscribe({
+        next: (response) => {
+          this.categoryForm.reset();
+          console.log('Category created successfully:', response);
+        }
+      });
+    }
+    ```
+
+    After successful creation, the form resets automatically, allowing you to quickly add multiple categories.
+  </Step>
+</Steps>
+
+## Category Data Model
+
+Categories use a simple but effective data structure:
+
+```typescript
+export interface Category {
+  id: number;
+  name: string | null;
+  type: 'Income' | 'Expense';
+}
+```
+
+### Category Request Model
+
+When creating a new category, the following data is sent to the API:
+
+```typescript
+export interface CategoryRequest {
+  name: string | null;
+  type: 'Income' | 'Expense';
+}
+```
+
+## Form Validation
+
+The category form enforces these validation rules:
+
+| Field | Required | Validation | Error Message |
+|-------|----------|------------|---------------|
+| Name | Yes | Non-empty string | "Please enter a valid name." |
+| Type | Yes | Must be 'Income' or 'Expense' | "Please select a type to continue." |
+
+<Warning>
+  Both fields must be completed before the form can be submitted. The submit button is automatically disabled until all validations pass.
+</Warning>
+
+## Using Categories in Transactions
+
+Once created, categories become available when creating transactions. The category selection process is dynamic:
+
+1. User selects transaction type (Income or Expense)
+2. System fetches categories matching that type
+3. Category dropdown populates with filtered options
+4. User selects the appropriate category
+
+### Category Filtering by Type
+
+The `CategoryService` provides a method to fetch categories by type:
+
+```typescript
+getCategoriesByType(type: string): Observable<ApiResponse<Category[]>> {
+  return this.http.get<ApiResponse<Category[]>>(`${this.apiUrl}/type/${type}`);
+}
+```
+
+This ensures users only see relevant categories when creating transactions:
+
+```typescript
+this.type.valueChanges.subscribe(type => {
+  if (!type) return;
+  
+  this.category.reset();
+  this.category.enable();
+
+  this.categoryService.getCategoriesByType(type).subscribe(response => {
+    this.categories.set(response.data);
+  })
+});
+```
+
+## Managing Categories
+
+The `CategoryService` provides full CRUD operations:
+
+```typescript
+// Create a category
+createCategory(category: CategoryRequest): Observable<ApiResponse<Category>>
+
+// Get all categories
+getAllCategories(): Observable<ApiResponse<Category[]>>
+
+// Get a specific category
+getCategoryById(id: string): Observable<ApiResponse<Category>>
+
+// Get categories by type
+getCategoriesByType(type: string): Observable<ApiResponse<Category[]>>
+
+// Update a category
+updateCategory(id: string, category: Category): Observable<ApiResponse<Category>>
+
+// Delete a category
+deleteCategory(id: string): Observable<void>
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Naming Conventions">
+    Use clear, concise names that describe the category's purpose:
+    - Good: "Groceries", "Utilities", "Freelance Income"
+    - Avoid: "Misc", "Stuff", "Other"
+  </Accordion>
+
+  <Accordion title="Category Granularity">
+    Find the right balance between too many and too few categories:
+    - Too specific: "Apples", "Bananas", "Oranges"
+    - Too broad: "Everything", "Spending"
+    - Just right: "Groceries", "Dining Out", "Entertainment"
+  </Accordion>
+
+  <Accordion title="Income vs Expense">
+    Always select the correct type to ensure proper filtering:
+    - Income categories: Salary, Freelance, Investments, Gifts Received
+    - Expense categories: Rent, Food, Transportation, Entertainment
+  </Accordion>
+</AccordionGroup>
+
+## Example Categories
+
+<Tabs>
+  <Tab title="Income Categories">
+    Common income categories you might create:
+    - **Salary**: Regular employment income
+    - **Freelance**: Contract or project-based work
+    - **Investments**: Dividends, interest, capital gains
+    - **Rental Income**: Property rental payments
+    - **Side Business**: Income from business ventures
+    - **Gifts**: Money received as gifts
+  </Tab>
+  <Tab title="Expense Categories">
+    Common expense categories you might create:
+    - **Housing**: Rent, mortgage, property taxes
+    - **Utilities**: Electric, water, gas, internet
+    - **Groceries**: Food and household supplies
+    - **Transportation**: Gas, car maintenance, public transit
+    - **Dining Out**: Restaurants, coffee shops
+    - **Entertainment**: Movies, concerts, subscriptions
+    - **Healthcare**: Medical expenses, insurance
+    - **Education**: Courses, books, training
+  </Tab>
+</Tabs>
+
+## Technical Implementation
+
+### Form Controls
+
+The category form uses Angular Reactive Forms with simple validation:
+
+```typescript
+categoryForm = new FormGroup({
+  name: new FormControl('', [Validators.required]),
+  type: new FormControl('', [Validators.required])
+});
+```
+
+### Form Getters
+
+Convenience getters provide easy access to form controls:
+
+```typescript
+get name() {
+  return this.categoryForm.controls.name;
+}
+
+get type() {
+  return this.categoryForm.controls.type;
+}
+```
+
+<Card title="Source Code Reference" icon="code">
+  View the complete implementation:
+  - Category Form: `src/app/components/category-form/category-form.ts`
+  - Category Service: `src/app/services/category-service.ts`
+  - Category Model: `src/app/models/category-model.ts`
+</Card>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Transactions" icon="dollar-sign" href="/features/transactions">
+    Learn how to create transactions using your categories
+  </Card>
+  <Card title="Reports" icon="chart-line" href="/features/reports">
+    View category-based transaction reports
+  </Card>
+</CardGroup>

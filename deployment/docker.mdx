@@ -1,0 +1,272 @@
+---
+title: 'Docker Deployment'
+description: 'Deploy MyFinance UI using Docker containers'
+icon: 'docker'
+---
+
+## Overview
+
+MyFinance UI uses a multi-stage Docker build to create an optimized production image. The build process compiles the Angular 21 application and serves it using nginx.
+
+## Dockerfile Architecture
+
+The application uses a two-stage Docker build:
+
+1. **Build Stage**: Compiles the Angular application using Node.js and pnpm
+2. **Runtime Stage**: Serves the compiled application using nginx
+
+<CodeGroup>
+
+```dockerfile dockerfile
+# Build stage
+FROM node:20-alpine AS build
+
+# Instalar pnpm
+RUN npm install -g pnpm@10.28.0
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar los archivos de configuración
+COPY package.json pnpm-lock.yaml ./
+
+# Instalar dependencias
+RUN pnpm install
+
+# Copiar el código fuente
+COPY . .
+
+# Compilar la aplicación Angular
+RUN pnpm run build
+
+# Runtime stage
+FROM nginx:alpine
+
+# Copiar configuración de nginx
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copiar los archivos compilados desde el build stage
+COPY --from=build /app/dist/my-finance-ui/browser /usr/share/nginx/html
+
+# Exponer puerto 80
+EXPOSE 80
+
+# Comando para ejecutar nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+</CodeGroup>
+
+## Building the Docker Image
+
+<Steps>
+  <Step title="Navigate to project directory">
+    Open your terminal and navigate to the MyFinance UI source directory:
+    
+    ```bash
+    cd ~/workspace/source
+    ```
+  </Step>
+
+  <Step title="Build the Docker image">
+    Build the Docker image using the following command:
+    
+    ```bash
+    docker build -t myfinance-ui:latest .
+    ```
+    
+    This process will:
+    - Install pnpm 10.28.0 globally
+    - Install all dependencies from `package.json`
+    - Compile the Angular application using `pnpm run build`
+    - Copy the compiled files to the nginx web server
+  </Step>
+
+  <Step title="Verify the image">
+    Confirm the image was created successfully:
+    
+    ```bash
+    docker images | grep myfinance-ui
+    ```
+  </Step>
+</Steps>
+
+## Running the Container
+
+<Steps>
+  <Step title="Run the container">
+    Start the container with port mapping:
+    
+    ```bash
+    docker run -d -p 8080:80 --name myfinance-app myfinance-ui:latest
+    ```
+    
+    This command:
+    - Runs the container in detached mode (`-d`)
+    - Maps port 8080 on your host to port 80 in the container
+    - Names the container `myfinance-app`
+  </Step>
+
+  <Step title="Access the application">
+    Open your browser and navigate to:
+    
+    ```
+    http://localhost:8080
+    ```
+  </Step>
+
+  <Step title="Check container logs">
+    View the nginx access and error logs:
+    
+    ```bash
+    docker logs myfinance-app
+    ```
+  </Step>
+</Steps>
+
+## Port Configuration
+
+The Docker container exposes port **80** by default. When running the container, you can map it to any available port on your host machine:
+
+```bash
+# Map to port 8080
+docker run -d -p 8080:80 myfinance-ui:latest
+
+# Map to port 3000
+docker run -d -p 3000:80 myfinance-ui:latest
+
+# Map to standard HTTP port (requires sudo)
+docker run -d -p 80:80 myfinance-ui:latest
+```
+
+<Note>
+The `EXPOSE 80` directive in the Dockerfile documents that the container listens on port 80, but the actual port mapping is controlled by the `-p` flag when running the container.
+</Note>
+
+## Environment Variables
+
+To configure the API endpoint at runtime, you can pass environment variables or mount a custom configuration file:
+
+```bash
+docker run -d -p 8080:80 \
+  -v $(pwd)/custom-environment.ts:/usr/share/nginx/html/environments/environment.ts \
+  myfinance-ui:latest
+```
+
+<Warning>
+Note that Angular environment variables are compiled at build time. For runtime configuration, consider using a configuration JSON file or environment-specific Docker images.
+</Warning>
+
+## Production Considerations
+
+### Build Optimizations
+
+The Angular build uses production configuration by default (see `angular.json:52`), which includes:
+
+- Output hashing for cache busting
+- Code minification and optimization
+- Bundle size budgets (500KB warning, 1MB error for initial bundles)
+
+### Security Best Practices
+
+<Steps>
+  <Step title="Run as non-root user">
+    Consider adding a non-root user in the Dockerfile:
+    
+    ```dockerfile
+    # Add after the COPY command in runtime stage
+    RUN addgroup -g 1001 -S nginx && \
+        adduser -u 1001 -S nginx -G nginx && \
+        chown -R nginx:nginx /usr/share/nginx/html
+    USER nginx
+    ```
+  </Step>
+
+  <Step title="Use custom nginx configuration">
+    Uncomment and create a custom `nginx.conf` to:
+    - Enable gzip compression
+    - Set security headers
+    - Configure caching policies
+    - Handle SPA routing (redirect all routes to index.html)
+  </Step>
+
+  <Step title="Scan for vulnerabilities">
+    Regularly scan your Docker images:
+    
+    ```bash
+    docker scan myfinance-ui:latest
+    ```
+  </Step>
+</Steps>
+
+### Image Size Optimization
+
+The current Dockerfile already uses several optimizations:
+
+- **Alpine-based images**: Both `node:20-alpine` and `nginx:alpine` use minimal Alpine Linux
+- **Multi-stage build**: Build dependencies are not included in the final image
+- **Layer caching**: Dependencies are installed before copying source code
+
+### Health Checks
+
+Add a health check to monitor container status:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:80 || exit 1
+```
+
+## Container Management
+
+### Stop the container
+```bash
+docker stop myfinance-app
+```
+
+### Start the container
+```bash
+docker start myfinance-app
+```
+
+### Remove the container
+```bash
+docker rm myfinance-app
+```
+
+### Remove the image
+```bash
+docker rmi myfinance-ui:latest
+```
+
+## Docker Compose (Optional)
+
+For more complex deployments with multiple services, create a `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+```
+
+Run with:
+```bash
+docker-compose up -d
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Configuration" icon="gear" href="/deployment/environment-config">
+    Configure API endpoints and environment-specific settings
+  </Card>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Learn about local development setup and installation
+  </Card>
+</CardGroup>

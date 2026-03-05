@@ -1,0 +1,201 @@
+---
+title: Architecture Overview
+description: Understanding the architecture and design patterns of MyFinance UI
+---
+
+## Application Architecture
+
+MyFinance UI is a modern personal finance management application built with **Angular 21**, leveraging the latest framework features and best practices. The application follows a component-based architecture with a clear separation of concerns.
+
+## Core Technologies
+
+The application is built on a foundation of modern web technologies:
+
+<CardGroup cols={2}>
+  <Card title="Angular 21" icon="angular">
+    Latest Angular framework with standalone components and signals
+  </Card>
+  <Card title="Tailwind CSS" icon="paintbrush">
+    Utility-first CSS framework for rapid UI development
+  </Card>
+  <Card title="Highcharts" icon="chart-line">
+    Advanced charting library for financial data visualization
+  </Card>
+  <Card title="Flatpickr" icon="calendar">
+    Lightweight date picker for transaction date selection
+  </Card>
+</CardGroup>
+
+## Key Dependencies
+
+```json
+{
+  "@angular/core": "^21.0.0",
+  "@angular/forms": "^21.0.0",
+  "@angular/router": "^21.0.0",
+  "tailwindcss": "^4.1.12",
+  "highcharts": "^12.5.0",
+  "highcharts-angular": "^5.4.0",
+  "flatpickr": "^4.6.13",
+  "ngx-flatpickr": "^1.0.7"
+}
+```
+
+## Architectural Patterns
+
+### Service-Based Architecture
+
+The application follows a service-based architecture where business logic and data access are centralized in injectable services:
+
+- **AuthService** - Handles authentication, token management, and login state
+- **TransactionService** - Manages CRUD operations for financial transactions
+- **CategoryService** - Handles category management and filtering
+- **ToastService** - Provides user notifications and feedback
+
+All services are provided at the root level using `@Injectable({ providedIn: 'root' })`, ensuring singleton instances across the application.
+
+### Reactive Forms
+
+The application uses Angular's **Reactive Forms** module for all form handling. This approach provides:
+
+- Type-safe form controls and validation
+- Reactive value changes with RxJS observables
+- Dynamic form behavior (e.g., enabling/disabling fields based on selections)
+- Programmatic form manipulation
+
+Example from `transaction-form.ts:51-65`:
+```typescript
+transactionForm = new FormGroup({
+  date: new FormControl(null, [Validators.required]),
+  amount: new FormControl(null, {
+    validators: [Validators.required, Validators.min(1)]
+  }),
+  type: new FormControl('', [Validators.required]),
+  description: new FormControl(null),
+  category: new FormControl({value: null, disabled: true }, {
+    validators: [Validators.required, Validators.min(1)],
+  }),
+});
+```
+
+### Standalone Components
+
+MyFinance UI uses Angular's modern **standalone components** architecture, eliminating the need for NgModules:
+
+- All components are self-contained with their own imports
+- Improved tree-shaking and bundle optimization
+- Simplified dependency management
+- Better developer experience with clear component dependencies
+
+Example from `app.ts:6-11`:
+```typescript
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
+})
+```
+
+### Signals for State Management
+
+The application leverages Angular **signals** for reactive state management:
+
+```typescript
+categories = signal<Category[]>([]);
+protected readonly title = signal('MyFinance.UI');
+```
+
+Signals provide fine-grained reactivity and improved performance by tracking dependencies automatically.
+
+### HTTP Interceptors
+
+The application uses functional HTTP interceptors for cross-cutting concerns:
+
+- **authInterceptor** - Automatically attaches JWT bearer tokens to API requests
+- Configured at the application level via `provideHttpClient()`
+- Excludes authentication endpoints from token injection
+
+See `auth-interceptor.ts:5-23` for implementation details.
+
+### Route Guards
+
+Authentication is enforced using functional route guards:
+
+- **authGuard** - Protects routes requiring authentication
+- Redirects unauthenticated users to the login page
+- Uses dependency injection to access AuthService
+
+Implemented as a `CanActivateFn` in `auth-guard.ts:5-15`.
+
+## Component Structure
+
+Components are organized by feature and responsibility:
+
+### Feature Components
+- **TransactionForm** - Create and manage financial transactions
+- **CategoryForm** - Manage income and expense categories
+- **TransactionReports** - View transaction history and summaries
+- **ReportChart** - Visualize financial data with charts
+- **LoginForm** - User authentication
+
+### Layout Components
+- **Layout** - Main application shell with navigation
+- **Navbar** - Application navigation bar
+
+### UI Components
+- **UiDropdown** - Reusable dropdown component
+- **Toast** - Notification display
+- **ConfirmationDialog** - User confirmation prompts
+
+## Application Configuration
+
+The application is configured in `app.config.ts:9-18` with the following providers:
+
+```typescript
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes),
+    provideHighcharts(),
+  ]
+};
+```
+
+This configuration sets up:
+- HTTP client with authentication interceptor
+- Global error handling
+- Client-side routing
+- Highcharts integration
+
+## Development Tools
+
+<AccordionGroup>
+  <Accordion title="Package Manager">
+    The project uses **pnpm** (version 10.28.0) for fast, efficient dependency management.
+  </Accordion>
+  
+  <Accordion title="TypeScript">
+    TypeScript 5.9.2 provides static type checking and enhanced IDE support.
+  </Accordion>
+  
+  <Accordion title="Testing">
+    Vitest 4.0.8 is configured for unit and component testing.
+  </Accordion>
+  
+  <Accordion title="Build System">
+    Angular Build (v21) provides optimized production builds with esbuild.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Project Structure" icon="folder-tree" href="/reference/project-structure">
+    Explore the detailed directory structure and file organization
+  </Card>
+  <Card title="Routing Configuration" icon="route" href="/reference/routing">
+    Learn about the application's routing setup and navigation
+  </Card>
+</CardGroup>

@@ -1,0 +1,115 @@
+---
+title: Introduction
+description: Welcome to MyFinance UI - A modern Angular-based personal finance management application
+---
+
+## What is MyFinance UI?
+
+MyFinance UI is a modern, Angular 21-based personal finance management application that helps you track your income, expenses, and generate comprehensive financial reports. Built with the latest web technologies, it provides an intuitive interface for managing your financial data.
+
+The application connects to a backend API to securely store and manage your financial transactions, categories, and generate insightful reports to help you understand your spending patterns.
+
+## Key Features
+
+MyFinance UI offers a comprehensive set of features for personal finance management:
+
+<CardGroup cols={2}>
+  <Card title="JWT Authentication" icon="lock">
+    Secure user authentication with JSON Web Tokens for protected access to your financial data
+  </Card>
+  
+  <Card title="Transaction Tracking" icon="wallet">
+    Track both income and expense transactions with detailed categorization and descriptions
+  </Card>
+  
+  <Card title="Category Management" icon="tags">
+    Organize your finances with customizable categories for both income and expenses
+  </Card>
+  
+  <Card title="Financial Reports" icon="chart-line">
+    Generate monthly reports with visual charts powered by Highcharts to analyze your spending
+  </Card>
+</CardGroup>
+
+### Additional Capabilities
+
+- **Date Picker Integration**: Select transaction dates easily with the flatpickr date picker
+- **Real-time Form Validation**: Instant feedback on form inputs using Angular's reactive forms
+- **Toast Notifications**: User-friendly success and error messages for all actions
+- **Confirmation Dialogs**: Prevent accidental deletions with confirmation prompts
+- **Docker Deployment**: Production-ready Docker configuration for easy deployment
+
+## Architecture Overview
+
+MyFinance UI is built with a modern Angular architecture:
+
+```
+src/app/
+├── components/          # UI components (forms, charts, layout)
+├── services/           # Business logic and API communication
+├── models/             # TypeScript interfaces and data models
+├── guards/             # Route guards for authentication
+├── interceptors/       # HTTP interceptors for auth tokens
+└── directives/         # Custom directives (date picker)
+```
+
+### Technology Stack
+
+- **Angular 21**: Latest version of the Angular framework with standalone components
+- **TypeScript 5.9**: Type-safe development experience
+- **TailwindCSS 4**: Utility-first CSS framework for styling
+- **Highcharts**: Interactive charts for financial visualizations
+- **Flatpickr**: Lightweight date picker component
+- **RxJS**: Reactive programming with observables
+
+### Core Services
+
+The application is organized around three main services:
+
+- **AuthService**: Handles user authentication, login, logout, and token management (src/app/services/Auth-service.ts:1)
+- **TransactionService**: Manages all transaction operations including CRUD and monthly reports
+- **CategoryService**: Handles category management with type-based filtering
+
+## Getting Started
+
+Ready to get started with MyFinance UI?
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get the app running in under 5 minutes
+  </Card>
+  
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Detailed installation instructions and prerequisites
+  </Card>
+  
+  <Card title="Core Features" icon="sparkles" href="/features/transactions">
+    Learn about transaction management and reporting
+  </Card>
+  
+  <Card title="Deployment" icon="server" href="/deployment/docker">
+    Deploy MyFinance UI with Docker
+  </Card>
+</CardGroup>
+
+## API Backend
+
+MyFinance UI requires a backend API server to function. By default, the application expects the API to be available at:
+
+```typescript
+http://localhost:5242/api
+```
+
+You can configure this endpoint in the environment configuration file at `src/environments/environment.ts`.
+
+<Note>
+  Make sure your backend API is running before starting the development server. The application uses JWT authentication and will not function without a properly configured backend.
+</Note>
+
+## Need Help?
+
+If you encounter any issues or have questions:
+
+- Check the [Installation Guide](/installation) for setup troubleshooting
+- Review the [Architecture Reference](/reference/overview) for technical details
+- Explore the [Component Documentation](/reference/components/transaction-form) for UI components
