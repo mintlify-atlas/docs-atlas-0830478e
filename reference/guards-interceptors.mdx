@@ -1,0 +1,219 @@
+---
+title: Guards, Interceptors & Directives
+description: Authentication guards, HTTP interceptors, and custom directives
+---
+
+This page documents the Angular guards, interceptors, and directives that provide authentication, HTTP request handling, and enhanced form inputs.
+
+## Authentication Guard
+
+The `authGuard` is a functional guard that protects routes from unauthorized access.
+
+**Location**: `src/app/guards/auth-guard.ts`
+
+### Implementation
+
+```typescript src/app/guards/auth-guard.ts
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/Auth-service';
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router)
+
+  if (authService.isLoggedIn()) {
+    return true;
+  }
+
+  router.navigate(['/login']);
+  return false;
+};
+```
+
+### Behavior
+
+1. Checks if the user is logged in using `AuthService.isLoggedIn()`
+2. If authenticated, allows access to the route (returns `true`)
+3. If not authenticated, redirects to `/login` and blocks access (returns `false`)
+
+### Usage
+
+The guard is applied to the root protected route in `app.routes.ts`:
+
+```typescript src/app/app.routes.ts
+{ 
+  path: '',
+  loadComponent: () => import('./components/layout/layout').then(m => m.Layout),
+  canActivate: [authGuard],
+  children: [
+    { path: 'transactions', loadComponent: () => import('./components/transaction-form/transaction-form').then(m => m.TransactionForm) },
+    { path: 'categories', loadComponent: () => import('./components/category-form/category-form').then(m => m.CategoryForm) },
+    { path: 'reports', loadComponent: () => import('./components/transaction-reports/transaction-reports').then(m => m.TransactionReports) },
+    { path: 'chart', loadComponent: () => import('./components/report-chart/report-chart').then(m => m.ReportChart) }
+  ]
+}
+```
+
+All child routes automatically inherit the guard, protecting:
+- `/transactions`
+- `/categories`
+- `/reports`
+- `/chart`
+
+<Note>
+The guard uses Angular's functional guard API (`CanActivateFn`) introduced in Angular 15+, which is simpler than the older class-based approach.
+</Note>
+
+## HTTP Interceptor
+
+The `authInterceptor` automatically attaches JWT tokens to outgoing HTTP requests.
+
+**Location**: `src/app/interceptors/auth-interceptor.ts`
+
+### Implementation
+
+```typescript src/app/interceptors/auth-interceptor.ts
+import { HttpInterceptorFn } from '@angular/common/http';
+import { AuthService } from '../services/Auth-service';
+import { inject } from '@angular/core';
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+
+  if (req.url.includes('/login')) {
+    return next(req);
+  }
+  const authService = inject(AuthService);
+
+  const token = authService.getToken();
+
+  if (token) {
+    const authReq = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return next(authReq);
+  }
+  return next(req);
+};
+```
+
+### Behavior
+
+1. **Skips login requests** - If the URL contains `/login`, the request passes through unchanged
+2. **Retrieves token** - Gets the JWT token from AuthService
+3. **Adds Authorization header** - If a token exists, clones the request and adds `Authorization: Bearer <token>` header
+4. **Passes through** - If no token exists, the original request continues unchanged
+
+### Registration
+
+The interceptor is registered in `app.config.ts`:
+
+```typescript src/app/app.config.ts
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
+  ]
+};
+```
+
+<Info>
+The functional interceptor API (`HttpInterceptorFn`) is the modern approach in Angular 15+, replacing the older class-based `HttpInterceptor` interface.
+</Info>
+
+## Flatpickr Directive
+
+The `FlatpickrDirective` integrates the Flatpickr date picker library into form inputs.
+
+**Location**: `src/app/directives/flatpickr-directive.ts`
+
+### Implementation
+
+```typescript src/app/directives/flatpickr-directive.ts
+import { Directive, ElementRef, OnDestroy, OnInit } from '@angular/core';
+import flatpickr from 'flatpickr';
+
+@Directive({
+  selector: '[appFlatpickr]',
+  standalone: true
+})
+export class FlatpickrDirective implements OnInit, OnDestroy {
+
+  private instance: any;
+
+  constructor(private el: ElementRef<HTMLInputElement>) {}
+
+  ngOnInit(): void {
+    this.instance = flatpickr(this.el.nativeElement, {
+      altInput: true,
+      altFormat: 'F j, Y',
+      dateFormat: 'Y-m-d',
+      disableMobile: true
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.instance?.destroy();
+  }
+}
+```
+
+### Configuration
+
+- **altInput**: `true` - Shows a user-friendly format in the input while storing ISO format in the value
+- **altFormat**: `'F j, Y'` - Display format (e.g., "January 15, 2024")
+- **dateFormat**: `'Y-m-d'` - Value format for form controls (e.g., "2024-01-15")
+- **disableMobile**: `true` - Uses custom picker on mobile devices instead of native picker
+
+### Usage
+
+Apply the directive to any input element to convert it to a date picker:
+
+```typescript
+<input
+  type="text"
+  appFlatpickr
+  formControlName="date"
+  class="..."
+  placeholder="Select date"
+/>
+```
+
+### Example in Transaction Form
+
+```typescript src/app/components/transaction-form/transaction-form.html
+<input
+  type="text"
+  appFlatpickr
+  [formControl]="date"
+  placeholder="Transaction date"
+  class="w-full px-4 py-2 border rounded-md"
+/>
+```
+
+The directive is used in the TransactionForm component to allow users to select transaction dates.
+
+<Tip>
+The Flatpickr instance is properly cleaned up in `ngOnDestroy()` to prevent memory leaks.
+</Tip>
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="shield" href="/features/authentication">
+    Learn about the authentication flow
+  </Card>
+  <Card title="AuthService" icon="key" href="/reference/services/auth-service">
+    JWT token management and login
+  </Card>
+  <Card title="Routing" icon="route" href="/reference/routing">
+    Route configuration and guard usage
+  </Card>
+  <Card title="Transaction Form" icon="file-lines" href="/reference/components/transaction-form">
+    See the Flatpickr directive in action
+  </Card>
+</CardGroup>

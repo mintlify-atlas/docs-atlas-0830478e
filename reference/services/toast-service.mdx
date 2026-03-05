@@ -1,0 +1,145 @@
+---
+title: ToastService
+description: Display user notifications and feedback messages
+---
+
+The ToastService provides a simple API for displaying toast notifications to users. It supports different notification types (success, error, warning, info) with auto-dismiss functionality.
+
+## Service Overview
+
+ToastService is a singleton service that manages the display of temporary notification messages across the application.
+
+**Location**: `src/app/services/toast-service.ts`
+
+## Methods
+
+### show()
+
+Display a toast notification with custom type and duration.
+
+```typescript
+show(message: string, type: ToastType = 'success', duration: number = 3000): void
+```
+
+<ParamField path="message" type="string" required>
+  The message to display in the toast
+</ParamField>
+
+<ParamField path="type" type="ToastType" default="success">
+  The type of toast: `'success' | 'error' | 'warning' | 'info'`
+</ParamField>
+
+<ParamField path="duration" type="number" default="3000">
+  Duration in milliseconds before the toast auto-dismisses
+</ParamField>
+
+### success()
+
+Display a success toast notification.
+
+```typescript
+success(message: string, duration: number = 3000): void
+```
+
+<ParamField path="message" type="string" required>
+  The success message to display
+</ParamField>
+
+<ParamField path="duration" type="number" default="3000">
+  Duration in milliseconds (default: 3 seconds)
+</ParamField>
+
+**Example**:
+```typescript src/app/components/transaction-form/transaction-form.ts
+this.transactionService.createTransaction(transaction).subscribe({
+  next: (response) => {
+    this.transactionForm.reset();
+    this.toastService.success('Transaction created successfully');
+    console.log('Transaction created successfully:', response);
+  }
+});
+```
+
+### error()
+
+Display an error toast notification with longer default duration.
+
+```typescript
+error(message: string, duration: number = 5000): void
+```
+
+<ParamField path="message" type="string" required>
+  The error message to display
+</ParamField>
+
+<ParamField path="duration" type="number" default="5000">
+  Duration in milliseconds (default: 5 seconds for errors)
+</ParamField>
+
+**Example**:
+```typescript
+this.authService.login(username, password).then(success => {
+  if (!success) {
+    this.toastService.error('Login failed. Please check your credentials.');
+  }
+});
+```
+
+## Type Definitions
+
+```typescript
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+interface Toast {
+  message: string;
+  type: ToastType;
+  duration: number;
+}
+```
+
+## State Management
+
+The service uses Angular signals for reactive state management:
+
+```typescript
+currentToast = signal<Toast | null>(null);
+```
+
+This signal is consumed by the Toast component to display notifications. When a new toast is shown, any existing toast is cleared and replaced.
+
+## Auto-dismiss Behavior
+
+- Success toasts auto-dismiss after 3 seconds (default)
+- Error toasts auto-dismiss after 5 seconds (default)
+- Custom durations can be specified for any toast type
+- Showing a new toast clears any existing timeout and replaces the current toast
+
+## Usage Pattern
+
+1. Inject the ToastService in your component:
+   ```typescript
+   private toastService = inject(ToastService);
+   ```
+
+2. Call the appropriate method when you need to notify the user:
+   ```typescript
+   // On successful operation
+   this.toastService.success('Changes saved successfully');
+   
+   // On error
+   this.toastService.error('Failed to save changes');
+   
+   // Custom type and duration
+   this.toastService.show('Processing...', 'info', 10000);
+   ```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="UI Components" icon="puzzle-piece" href="/reference/components/ui-components">
+    Toast, Navbar, Layout, and other UI components
+  </Card>
+  <Card title="Architecture Overview" icon="sitemap" href="/reference/overview">
+    Learn about the service-based architecture
+  </Card>
+</CardGroup>

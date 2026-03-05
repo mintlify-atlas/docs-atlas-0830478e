@@ -62,7 +62,8 @@
             "pages": [
               "reference/overview",
               "reference/project-structure",
-              "reference/routing"
+              "reference/routing",
+              "reference/guards-interceptors"
             ]
           },
           {
@@ -71,7 +72,8 @@
               "reference/components/transaction-form",
               "reference/components/category-form",
               "reference/components/reports",
-              "reference/components/charts"
+              "reference/components/charts",
+              "reference/components/ui-components"
             ]
           },
           {
@@ -80,6 +82,7 @@
               "reference/services/auth-service",
               "reference/services/transaction-service",
               "reference/services/category-service",
+              "reference/services/toast-service",
               "reference/models"
             ]
           }

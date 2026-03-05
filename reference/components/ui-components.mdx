@@ -1,0 +1,276 @@
+---
+title: UI Components
+description: Reusable UI components for layout, navigation, and user feedback
+---
+
+This page documents the utility UI components that provide layout structure, navigation, and user feedback across the MyFinance UI application.
+
+## Layout Component
+
+The Layout component provides the main application structure with navigation and toast notifications.
+
+**Location**: `src/app/components/layout/layout.ts`
+
+```typescript
+@Component({
+  selector: 'app-layout',
+  imports: [Navbar, RouterOutlet, Toast],
+  templateUrl: './layout.html',
+  styleUrl: './layout.css',
+})
+export class Layout {}
+```
+
+The Layout component wraps all authenticated routes and includes:
+- **Navbar** - Top navigation bar with logout functionality
+- **RouterOutlet** - Container for routed page content
+- **Toast** - Global notification system
+
+## Navbar Component
+
+The Navbar component provides navigation controls and user actions.
+
+**Location**: `src/app/components/navbar/navbar.ts`
+
+### Properties
+
+- `currentRoute: string` - Returns the current router URL
+
+### Methods
+
+```typescript
+navigate(route: string): void
+```
+Navigate to the specified route.
+
+```typescript
+logout(): void
+```
+Log out the current user and redirect to the login page.
+
+### Implementation
+
+```typescript src/app/components/navbar/navbar.ts
+@Component({
+  selector: 'app-navbar',
+  templateUrl: './navbar.html',
+  styleUrl: './navbar.css',
+})
+export class Navbar {
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  navigate(route: string) {
+    this.router.navigate([route]);
+  }
+  
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+  
+  get currentRoute(): string {
+    return this.router.url;
+  }
+}
+```
+
+## Toast Component
+
+The Toast component displays temporary notification messages to users.
+
+**Location**: `src/app/components/toast/toast.ts`
+
+### Properties
+
+- `currentToast` - Signal from ToastService containing the current toast state
+
+### Methods
+
+```typescript
+getToastClasses(type: ToastType): string
+```
+Returns Tailwind CSS classes based on the toast type (success, error, warning, info).
+
+```typescript
+getIcon(type: ToastType): string
+```
+Returns an emoji icon for the toast type:
+- Success: ✅
+- Error: ❌
+- Warning: ⚠️
+- Info: ℹ️
+
+### Toast Styles
+
+The Toast component applies different background colors and borders based on the type:
+
+<Tabs>
+  <Tab title="Success">
+    Green background with dark green left border
+    ```css
+    bg-green-600 text-white border-l-4 border-green-800
+    ```
+  </Tab>
+  <Tab title="Error">
+    Red background with dark red left border
+    ```css
+    bg-red-600 text-white border-l-4 border-red-800
+    ```
+  </Tab>
+  <Tab title="Warning">
+    Yellow background with dark yellow left border
+    ```css
+    bg-yellow-500 text-gray-900 border-l-4 border-yellow-700
+    ```
+  </Tab>
+  <Tab title="Info">
+    Blue background with dark blue left border
+    ```css
+    bg-blue-600 text-white border-l-4 border-blue-800
+    ```
+  </Tab>
+</Tabs>
+
+## ConfirmationDialog Component
+
+A reusable confirmation dialog for destructive actions.
+
+**Location**: `src/app/components/confirmation-dialog/confirmation-dialog.ts`
+
+### Inputs
+
+<ParamField path="isOpen" type="boolean" default="false">
+  Controls the visibility of the dialog
+</ParamField>
+
+<ParamField path="title" type="string">
+  The dialog title text
+</ParamField>
+
+<ParamField path="message" type="string">
+  The primary message text
+</ParamField>
+
+<ParamField path="messageSecondary" type="string">
+  Optional secondary message text
+</ParamField>
+
+<ParamField path="confirmText" type="string" default="Confirm">
+  Text for the confirm button
+</ParamField>
+
+<ParamField path="cancelText" type="string" default="Cancel">
+  Text for the cancel button
+</ParamField>
+
+<ParamField path="confirmButtonClass" type="string" default="bg-red-600 hover:bg-red-700">
+  Tailwind CSS classes for the confirm button
+</ParamField>
+
+### Outputs
+
+<ResponseField name="confirm" type="void">
+  Emitted when the user confirms the action
+</ResponseField>
+
+<ResponseField name="cancel" type="void">
+  Emitted when the user cancels or clicks outside the dialog
+</ResponseField>
+
+### Usage Example
+
+```typescript
+<app-confirmation-dialog
+  [isOpen]="showDeleteDialog"
+  [title]="'Delete Transaction'"
+  [message]="'Are you sure you want to delete this transaction?'"
+  [messageSecondary]="'This action cannot be undone.'"
+  [confirmText]="'Delete'"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>
+```
+
+## UiDropdown Component
+
+A custom dropdown component that implements Angular's ControlValueAccessor for form integration.
+
+**Location**: `src/app/components/ui-dropdown/ui-dropdown.ts`
+
+### Inputs
+
+<ParamField path="items" type="any[]" default="[]">
+  Array of items to display in the dropdown
+</ParamField>
+
+<ParamField path="valueField" type="string | null" default="undefined">
+  The property to use as the form control value (e.g., 'id')
+</ParamField>
+
+<ParamField path="trackByField" type="string" default="id">
+  The property to use for change detection tracking
+</ParamField>
+
+<ParamField path="labelField" type="string" default="name">
+  The property to display as the label for each item
+</ParamField>
+
+### Form Integration
+
+UiDropdown implements `ControlValueAccessor`, allowing it to work with Angular reactive forms:
+
+```typescript
+// In a FormGroup
+category: new FormControl(null, [Validators.required])
+
+// In the template
+<app-ui-dropdown
+  [items]="categories()"
+  [formControl]="category"
+  valueField="id"
+  labelField="name"
+/>
+```
+
+### State
+
+- `isDropdownOpen: boolean` - Controls dropdown visibility
+- `selectedItem: Signal<any | null>` - The currently selected item
+- `disabled: boolean` - Disabled state from form control
+
+### Methods
+
+```typescript
+toggleDropdown(): void
+```
+Opens or closes the dropdown menu.
+
+```typescript
+selectItem(item: any): void
+```
+Selects an item and updates the form control value.
+
+```typescript
+getDisplayValue(): string
+```
+Returns the display text for the selected item or "Select an option" if none selected.
+
+## Related Documentation
+
+<CardGroup cols={2}>
+  <Card title="ToastService" icon="bell" href="/reference/services/toast-service">
+    Service that powers the Toast component
+  </Card>
+  <Card title="Routing" icon="route" href="/reference/routing">
+    Learn about route configuration and the Layout component
+  </Card>
+  <Card title="Transaction Form" icon="file-lines" href="/reference/components/transaction-form">
+    See UiDropdown in action
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/reference/project-structure">
+    Component organization and file structure
+  </Card>
+</CardGroup>
